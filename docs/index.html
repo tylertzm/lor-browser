@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lor — Modern Liquid Glass Browser for macOS</title>
+  <title>Lor — Liquid Glass Monochrome Browser for macOS</title>
   <meta name="description" content="A minimalist desktop browser built with Electron, TypeScript, and React combining spaces & vertical tabs with a pure liquid monochrome aesthetic. Handcrafted by Tyler Tan.">
   <link rel="icon" type="image/png" href="assets/logo.png">
 
-  <!-- Google Fonts: Inter -->
+  <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -51,9 +51,9 @@
       top: 0;
       left: 50%;
       transform: translateX(-50%);
-      width: 1000px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.01) 45%, transparent 70%);
+      width: 1100px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.015) 50%, transparent 75%);
       pointer-events: none;
       z-index: 0;
     }
@@ -145,7 +145,7 @@
       font-size: 0.85rem;
       font-weight: 600;
       text-decoration: none;
-      transition: transform 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
+      transition: transform 0.15s ease, background-color 0.15s ease;
     }
 
     .btn-nav-download:hover {
@@ -155,7 +155,7 @@
 
     /* Hero Section */
     .hero {
-      padding: 90px 0 60px;
+      padding: 80px 0 40px;
       text-align: center;
     }
 
@@ -181,12 +181,12 @@
     }
 
     .hero-title {
-      font-size: 3.5rem;
-      line-height: 1.1;
+      font-size: 3.8rem;
+      line-height: 1.08;
       font-weight: 800;
       letter-spacing: -0.04em;
       margin-bottom: 20px;
-      max-width: 900px;
+      max-width: 920px;
       margin-left: auto;
       margin-right: auto;
       background: linear-gradient(180deg, #ffffff 40%, #a1a1aa 100%);
@@ -198,7 +198,7 @@
       font-size: 1.25rem;
       line-height: 1.6;
       color: var(--text-secondary);
-      max-width: 680px;
+      max-width: 700px;
       margin: 0 auto 36px;
       font-weight: 400;
     }
@@ -207,8 +207,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 14px;
-      margin-bottom: 48px;
+      gap: 16px;
+      margin-bottom: 60px;
     }
 
     .cta-buttons {
@@ -224,19 +224,20 @@
       gap: 10px;
       background: #ffffff;
       color: #000000;
-      padding: 14px 28px;
+      padding: 15px 30px;
       border-radius: 12px;
       font-weight: 600;
       font-size: 1rem;
       text-decoration: none;
-      box-shadow: 0 0 24px rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 28px rgba(255, 255, 255, 0.25);
       transition: all 0.2s ease;
+      cursor: pointer;
     }
 
     .btn-primary:hover {
       background: #f4f4f5;
       transform: translateY(-2px);
-      box-shadow: 0 0 32px rgba(255, 255, 255, 0.35);
+      box-shadow: 0 0 36px rgba(255, 255, 255, 0.4);
     }
 
     .btn-secondary {
@@ -246,7 +247,7 @@
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border-subtle);
       color: var(--text-primary);
-      padding: 14px 24px;
+      padding: 15px 26px;
       border-radius: 12px;
       font-weight: 600;
       font-size: 1rem;
@@ -261,159 +262,91 @@
     }
 
     .dmg-meta {
-      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.85rem;
       color: var(--text-muted);
       font-family: 'JetBrains Mono', monospace;
     }
 
-    /* Product Preview Showcase */
-    .preview-wrapper {
-      max-width: 980px;
+    .dmg-meta a {
+      color: #e4e4e7;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .dmg-meta a:hover {
+      color: #ffffff;
+    }
+
+    /* Hero Showcase Image */
+    .hero-showcase {
+      max-width: 1080px;
       margin: 0 auto 100px;
+      position: relative;
+    }
+
+    .showcase-frame {
       border-radius: var(--radius-lg);
       padding: 2px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.02) 60%);
-      box-shadow: 0 30px 100px -20px rgba(0, 0, 0, 0.9), 0 0 60px rgba(255, 255, 255, 0.05);
-    }
-
-    .preview-window {
-      background: #09090b;
-      border-radius: calc(var(--radius-lg) - 2px);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.03) 70%);
+      box-shadow: 0 30px 120px -20px rgba(0, 0, 0, 0.95), 0 0 60px rgba(255, 255, 255, 0.06);
       overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .window-header {
-      background: #121215;
-      padding: 12px 18px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .window-dots {
-      display: flex;
-      gap: 7px;
-    }
-
-    .dot {
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-    }
-    .dot-close { background: #ff5f56; }
-    .dot-min { background: #ffbd2e; }
-    .dot-max { background: #27c93f; }
-
-    .window-address-bar {
-      flex: 1;
-      max-width: 480px;
-      margin: 0 auto;
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      padding: 5px 12px;
-      font-size: 0.75rem;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .window-body {
-      display: flex;
-      min-height: 480px;
-      background: #030304;
-    }
-
-    .mock-sidebar {
-      width: 260px;
-      background: #08080a;
-      border-right: 1px solid var(--border-subtle);
-      padding: 18px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      text-align: left;
-    }
-
-    .mock-space-badge {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #fff;
-      letter-spacing: 0.03em;
-    }
-
-    .mock-pinned-section {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .mock-section-title {
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 2px;
-    }
-
-    .mock-tab {
-      padding: 7px 10px;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: background 0.15s;
-    }
-
-    .mock-tab.active {
-      background: rgba(255, 255, 255, 0.08);
-      color: #ffffff;
-      font-weight: 500;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .mock-content-area {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 30px;
-      position: relative;
-      background: radial-gradient(circle at center, #0f0f13 0%, #030304 80%);
-    }
-
-    .screenshot-card {
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      max-width: 440px;
+    .showcase-frame img {
       width: 100%;
+      height: auto;
+      display: block;
+      border-radius: calc(var(--radius-lg) - 2px);
     }
 
-    .screenshot-card img {
+    /* Dual Gallery Preview */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 100px;
+    }
+
+    .gallery-card {
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      position: relative;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .gallery-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-focus);
+    }
+
+    .gallery-card img {
       width: 100%;
       height: auto;
       display: block;
     }
 
+    .gallery-caption {
+      padding: 16px 20px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .gallery-caption strong {
+      color: #ffffff;
+    }
+
     /* Features Grid */
     .features-section {
-      padding: 60px 0 100px;
+      padding: 40px 0 100px;
     }
 
     .section-header {
@@ -431,7 +364,7 @@
     }
 
     .section-title {
-      font-size: 2.2rem;
+      font-size: 2.3rem;
       font-weight: 700;
       letter-spacing: -0.03em;
     }
@@ -458,15 +391,15 @@
     }
 
     .feature-icon {
-      width: 42px;
-      height: 42px;
+      width: 44px;
+      height: 44px;
       border-radius: 10px;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.25rem;
+      font-size: 1.3rem;
       margin-bottom: 18px;
     }
 
@@ -485,7 +418,7 @@
 
     /* Shortcuts Table */
     .shortcuts-section {
-      padding: 40px 0 100px;
+      padding: 20px 0 100px;
     }
 
     .shortcuts-wrapper {
@@ -530,38 +463,54 @@
       max-width: 800px;
       margin: 0 auto 100px;
       background: rgba(255, 255, 255, 0.02);
-      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border: 1px dashed rgba(255, 255, 255, 0.18);
       border-radius: var(--radius-md);
-      padding: 24px;
+      padding: 28px;
       text-align: left;
     }
 
     .install-box h4 {
-      font-size: 0.95rem;
-      margin-bottom: 8px;
+      font-size: 1rem;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .install-box p {
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       color: var(--text-secondary);
-      line-height: 1.5;
-      margin-bottom: 12px;
+      line-height: 1.55;
+      margin-bottom: 14px;
     }
 
     .code-snippet {
       background: #000000;
       border: 1px solid var(--border-subtle);
-      padding: 10px 14px;
-      border-radius: 6px;
+      padding: 12px 16px;
+      border-radius: 8px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       color: #e4e4e7;
       display: flex;
       align-items: center;
       justify-content: space-between;
+    }
+
+    .copy-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
     }
 
     /* Footer */
@@ -573,20 +522,20 @@
     }
 
     .footer-logo {
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       border-radius: 10px;
       margin-bottom: 16px;
     }
 
     .footer-title {
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       margin-bottom: 6px;
     }
 
     .footer-author {
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       color: var(--text-secondary);
       margin-bottom: 20px;
     }
@@ -616,18 +565,10 @@
 
     @media (max-width: 768px) {
       .hero-title {
-        font-size: 2.3rem;
+        font-size: 2.4rem;
       }
-      .hero-subtitle {
-        font-size: 1.05rem;
-      }
-      .window-body {
-        flex-direction: column;
-      }
-      .mock-sidebar {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--border-subtle);
+      .gallery-grid {
+        grid-template-columns: 1fr;
       }
       .nav-links .nav-link {
         display: none;
@@ -651,7 +592,8 @@
         <a href="#features" class="nav-link">Features</a>
         <a href="#shortcuts" class="nav-link">Shortcuts</a>
         <a href="https://github.com/tylertzm/lor-browser" target="_blank" rel="noopener noreferrer" class="nav-link">GitHub</a>
-        <a href="https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg" class="btn-nav-download">
+        <a href="https://github.com/tylertzm/lor-browser/releases/tag/v0.1.0" target="_blank" rel="noopener noreferrer" class="nav-link">Releases</a>
+        <a href="https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg" class="btn-nav-download" download onclick="trackDownload(event)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
@@ -681,13 +623,13 @@
 
       <div class="cta-container">
         <div class="cta-buttons">
-          <a href="https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg" class="btn-primary" id="download-button">
+          <a href="https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg" class="btn-primary" id="main-download-btn" download onclick="trackDownload(event)">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
             </svg>
-            Download for Apple Silicon (DMG)
+            <span id="download-text">Download for Apple Silicon (DMG)</span>
           </a>
 
           <a href="https://github.com/tylertzm/lor-browser" target="_blank" rel="noopener noreferrer" class="btn-secondary">
@@ -699,60 +641,34 @@
         </div>
 
         <div class="dmg-meta">
-          Lor-0.1.0-arm64.dmg • 196 MB • macOS 13.0+ (M1/M2/M3/M4)
+          <span>Lor-0.1.0-arm64.dmg • 196.2 MB • macOS 13.0+</span>
+          <span>•</span>
+          <a href="https://github.com/tylertzm/lor-browser/releases/tag/v0.1.0" target="_blank" rel="noopener noreferrer">View on GitHub Releases ↗</a>
         </div>
       </div>
 
-      <!-- Preview Window -->
-      <div class="preview-wrapper">
-        <div class="preview-window">
-          <div class="window-header">
-            <div class="window-dots">
-              <div class="dot dot-close"></div>
-              <div class="dot dot-min"></div>
-              <div class="dot dot-max"></div>
-            </div>
-            <div class="window-address-bar">
-              <span>lor://spaces/personal</span>
-              <span style="opacity: 0.5;">⌘L</span>
-            </div>
+      <!-- Hero Showcase: Real Lor Main Window -->
+      <div class="hero-showcase">
+        <div class="showcase-frame">
+          <img src="assets/lor-main-ui.png" alt="Lor Browser Main Desktop Interface">
+        </div>
+      </div>
+
+      <!-- Secondary Gallery Showcase: Onboarding + Spaces Showcase -->
+      <div class="gallery-grid">
+        <div class="gallery-card">
+          <img src="assets/lor-onboarding.png" alt="Lor Prologue & Philosophy">
+          <div class="gallery-caption">
+            <span><strong>Prologue</strong> — The Internet, Reclaimed</span>
+            <span style="font-size:0.75rem; color:#71717a;">Sanctuary for thinkers</span>
           </div>
+        </div>
 
-          <div class="window-body">
-            <!-- Simulated Sidebar -->
-            <div class="mock-sidebar">
-              <div class="mock-space-badge">
-                <span>SPACE // PERSONAL</span>
-                <span style="font-size: 0.65rem; color: #a1a1aa;">3 TABS</span>
-              </div>
-
-              <div class="mock-pinned-section">
-                <div class="mock-section-title">Pinned</div>
-                <div class="mock-tab active">
-                  <span>📌</span> GitHub / Dashboard
-                </div>
-                <div class="mock-tab">
-                  <span>📌</span> Linear / Backlog
-                </div>
-              </div>
-
-              <div class="mock-pinned-section" style="margin-top: 10px;">
-                <div class="mock-section-title">Open Tabs</div>
-                <div class="mock-tab">
-                  <span>⌘</span> arXiv: Liquid State Engines
-                </div>
-                <div class="mock-tab">
-                  <span>⌘</span> Typescript 5.6 Release Notes
-                </div>
-              </div>
-            </div>
-
-            <!-- Spotlight Card in Content Area -->
-            <div class="mock-content-area">
-              <div class="screenshot-card">
-                <img src="assets/spaces-preview.png" alt="Lor Spaces and Menu Showcase">
-              </div>
-            </div>
+        <div class="gallery-card">
+          <img src="assets/spaces-preview.png" alt="Spaces Management Menu">
+          <div class="gallery-caption">
+            <span><strong>Spaces Hub</strong> — Context Isolation</span>
+            <span style="font-size:0.75rem; color:#71717a;">Personal • Work • Labs</span>
           </div>
         </div>
       </div>
@@ -876,11 +792,11 @@
         macOS First-Launch Note
       </h4>
       <p>
-        Because Lor is an open-source build without an expensive commercial Apple Developer ID certificate, macOS Gatekeeper may alert you upon opening. If prompted with "Lor is damaged or can't be opened", simply open Terminal and run:
+        Because Lor is an open-source build without an Apple Developer ID signature, macOS Gatekeeper may show a warning on first launch. If prompted with <em>"Lor is damaged or can't be opened"</em>, run this single command in Terminal:
       </p>
       <div class="code-snippet">
         <code>xattr -cr /Applications/Lor.app</code>
-        <button onclick="navigator.clipboard.writeText('xattr -cr /Applications/Lor.app'); alert('Copied to clipboard!');" style="background:none; border:none; color:#a1a1aa; cursor:pointer; font-size:0.75rem;">Copy</button>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText('xattr -cr /Applications/Lor.app'); this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000);">Copy</button>
       </div>
     </div>
   </section>
@@ -904,5 +820,20 @@
       </div>
     </div>
   </footer>
+
+  <script>
+    function trackDownload(e) {
+      const btnText = document.getElementById('download-text');
+      if (btnText) {
+        btnText.textContent = 'Downloading Lor DMG...';
+        setTimeout(() => {
+          btnText.textContent = 'Download for Apple Silicon (DMG)';
+        }, 4000);
+      }
+      // Ensure download initiates directly
+      const directUrl = 'https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg';
+      window.location.assign(directUrl);
+    }
+  </script>
 </body>
 </html>

@@ -2,36 +2,56 @@
 
 <div align="center">
 
-![Lor Banner](docs/assets/spaces-preview.png)
+<br>
 
-**A minimalist desktop browser built with Electron, TypeScript, and React combining spaces & vertical tabs with a pure liquid monochrome aesthetic.**
+<img src="docs/assets/logo.png" width="96" height="96" alt="Lor Logo" />
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-macOS%20(Apple%20Silicon)-black.svg)](https://github.com/tylertzm/lor-browser/releases)
-[![Version](https://img.shields.io/badge/Release-v0.1.0-white.svg)](https://github.com/tylertzm/lor-browser/releases/tag/v0.1.0)
-[![Website](https://img.shields.io/badge/Website-Online-brightgreen.svg)](https://tylertzm.github.io/lor-browser/)
+# Lor
+### Modern Liquid Glass & Monochrome Browser for macOS
 
-[**Website & Download**](https://tylertzm.github.io/lor-browser/) • [**Download DMG (v0.1.0)**](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg) • [**Report an Issue**](https://github.com/tylertzm/lor-browser/issues)
+A minimalist desktop browser built with Electron, TypeScript, and React combining spaces & vertical tabs with a pure monochrome aesthetic.
+
+<br>
+
+[![Download DMG](https://img.shields.io/badge/Download-Lor--0.1.0--arm64.dmg%20(196MB)-ffffff?style=for-the-badge&logo=apple&logoColor=black)](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg)
+[![GitHub Release](https://img.shields.io/badge/Release-v0.1.0--Beta-181717?style=for-the-badge&logo=github)](https://github.com/tylertzm/lor-browser/releases/tag/v0.1.0)
+[![Website](https://img.shields.io/badge/Website-Live%20on%20GitHub%20Pages-brightgreen?style=for-the-badge)](https://tylertzm.github.io/lor-browser/)
+
+<br>
+
+[**Website**](https://tylertzm.github.io/lor-browser/) • [**Direct Download (.dmg)**](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg) • [**GitHub Releases**](https://github.com/tylertzm/lor-browser/releases) • [**Report Bug**](https://github.com/tylertzm/lor-browser/issues)
+
+<br>
+
+![Lor Desktop Interface](docs/assets/lor-main-ui.png)
 
 </div>
 
 ---
 
-## 🌟 Key Features
+## 🌟 Key Highlights
 
-1. **Pure Liquid Monochrome Aesthetic**:
-   - Deep pitch black (`#000000`), carbon glass panels (`#0a0a0c`), crisp white typography (`#ffffff`), and silver accents (`#8c8c8c`).
-   - High-contrast, zero-clutter visual hierarchy engineered for focus.
+<div align="center">
+
+| Prologue | Spaces & Navigation |
+| :---: | :---: |
+| ![Lor Prologue](docs/assets/lor-onboarding.png) | ![Lor Spaces](docs/assets/spaces-preview.png) |
+
+</div>
+
+1. **Pure Liquid Monochrome Canvas**:
+   - Deep obsidian canvas (`#000000`), carbon panels (`#0a0a0c`), crisp white typography (`#ffffff`), and silver accents.
+   - High-contrast, zero-clutter visual hierarchy engineered for deep focus.
 
 2. **Collapsible Sidebar with 15% Screen Peek**:
-   - Press **`Cmd + S`** or click **`[|]`** to collapse the sidebar into full immersion mode.
-   - **Hover to Peek**: Hover your cursor within the **left 15% edge of your display** to slide the navigation bar open instantly.
-   - Click the toggle button while peeking to lock it permanently in place.
+   - Press **`Cmd + S`** or click **`[|]`** to collapse the sidebar into borderless web immersion.
+   - **Hover to Peek**: Move your cursor within the **left 15% edge of your display** to slide the navigation bar open instantly.
+   - Click the lock toggle button while peeking to pin it permanently open.
 
-3. **Dynamic Spaces**:
-   - Organize context into distinct workspaces (`Personal`, `Work`, `Labs`).
-   - Switch between them with trackpad gestures (two-finger horizontal swipe).
-   - Rename and organize spaces in real-time with automatic persistence.
+3. **Dynamic Isolated Spaces**:
+   - Organize workflows into distinct workspaces (`Personal`, `Work`, `Labs`).
+   - Switch between them with smooth trackpad gestures (two-finger horizontal swipe).
+   - Real-time space management and local persistence.
 
 4. **Semantic Tab Tidy**:
    - Clean up tab chaos with one click. Intelligently clusters open tabs into categorized buckets:
@@ -54,16 +74,21 @@
 
 ## 📥 Download & Installation
 
-### Option 1: Direct DMG (Recommended)
-Download the latest packaged installer for Apple Silicon (M1/M2/M3/M4):
-👉 **[Download Lor-0.1.0-arm64.dmg](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg)**
+### Option 1: Direct DMG (Apple Silicon M1/M2/M3/M4)
 
-1. Open the downloaded `.dmg` file.
+👉 **[Download Lor-0.1.0-arm64.dmg (Direct Download)](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg)**
+
+Or visit the **[GitHub Releases Page](https://github.com/tylertzm/lor-browser/releases/tag/v0.1.0)** to download manually.
+
+### Installation Steps
+1. Open the downloaded `Lor-0.1.0-arm64.dmg`.
 2. Drag `Lor.app` into your **Applications** folder.
-3. Open Lor from Applications or Spotlight.
+3. Launch **Lor** from Applications or Spotlight.
 
-> **Note for macOS Gatekeeper:**
-> Because this is a community open-source release without an Apple Developer ID signature, macOS may show a security notice on first launch. If you see *"Lor is damaged or can't be opened"*, run this single command in Terminal:
+> **macOS Gatekeeper First-Launch Note:**
+> Because this is a community open-source release without a commercial Apple Developer ID certificate, macOS Gatekeeper may show a warning on first launch (*"Lor is damaged or can't be opened"*).
+> 
+> Simply run this command once in Terminal:
 > ```bash
 > xattr -cr /Applications/Lor.app
 > ```
@@ -90,25 +115,26 @@ Download the latest packaged installer for Apple Silicon (M1/M2/M3/M4):
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (v18+)
 - [npm](https://www.npmjs.com/) (v9+)
-- macOS (tested on Sonoma & Sequoia)
+- macOS (Apple Silicon or Intel)
 
-### Steps
+### Commands
 
 ```bash
-# 1. Clone the repository
+# Clone the repository
 git clone https://github.com/tylertzm/lor-browser.git
 cd lor-browser
 
-# 2. Install dependencies
+# Install dependencies
 npm install
 
-# 3. Start development server
+# Start development mode
 npm run dev
 
-# 4. Package native macOS .dmg
+# Package native macOS .dmg bundle
 npm run package
 ```
-The packaged DMG will be generated inside the `dist/` directory.
+
+The compiled installer will be generated in `dist/Lor-0.1.0-arm64.dmg`.
 
 ---
 
