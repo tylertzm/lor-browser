@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lor — Modern Liquid Glass Browser for macOS</title>
+  <meta name="description" content="A minimalist desktop browser built with Electron, TypeScript, and React combining spaces & vertical tabs with a pure liquid monochrome aesthetic. Handcrafted by Tyler Tan.">
+  <link rel="icon" type="image/png" href="assets/logo.png">
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-primary: #000000;
+      --bg-surface: #0a0a0c;
+      --bg-card: rgba(18, 18, 22, 0.7);
+      --bg-card-hover: rgba(28, 28, 34, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(255, 255, 255, 0.22);
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent-glow: rgba(255, 255, 255, 0.12);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Ambient background glow */
+    .ambient-glow {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1000px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.01) 45%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Navigation */
+    nav {
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(0, 0, 0, 0.75);
+      border-bottom: 1px solid var(--border-subtle);
+      z-index: 100;
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 72px;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .nav-brand img {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .nav-title {
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-version-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 100px;
+      color: #e4e4e7;
+      letter-spacing: 0.02em;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .nav-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.15s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+    }
+
+    .btn-nav-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+      color: #000000;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn-nav-download:hover {
+      background: #e4e4e7;
+      transform: translateY(-1px);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 90px 0 60px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .hero-badge .pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 10px #22c55e;
+    }
+
+    .hero-title {
+      font-size: 3.5rem;
+      line-height: 1.1;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin-bottom: 20px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      background: linear-gradient(180deg, #ffffff 40%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-width: 680px;
+      margin: 0 auto 36px;
+      font-weight: 400;
+    }
+
+    .cta-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 48px;
+    }
+
+    .cta-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #ffffff;
+      color: #000000;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      box-shadow: 0 0 24px rgba(255, 255, 255, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background: #f4f4f5;
+      transform: translateY(-2px);
+      box-shadow: 0 0 32px rgba(255, 255, 255, 0.35);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--border-focus);
+      transform: translateY(-2px);
+    }
+
+    .dmg-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Product Preview Showcase */
+    .preview-wrapper {
+      max-width: 980px;
+      margin: 0 auto 100px;
+      border-radius: var(--radius-lg);
+      padding: 2px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.02) 60%);
+      box-shadow: 0 30px 100px -20px rgba(0, 0, 0, 0.9), 0 0 60px rgba(255, 255, 255, 0.05);
+    }
+
+    .preview-window {
+      background: #09090b;
+      border-radius: calc(var(--radius-lg) - 2px);
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .window-header {
+      background: #121215;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 7px;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+    .dot-close { background: #ff5f56; }
+    .dot-min { background: #ffbd2e; }
+    .dot-max { background: #27c93f; }
+
+    .window-address-bar {
+      flex: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .window-body {
+      display: flex;
+      min-height: 480px;
+      background: #030304;
+    }
+
+    .mock-sidebar {
+      width: 260px;
+      background: #08080a;
+      border-right: 1px solid var(--border-subtle);
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      text-align: left;
+    }
+
+    .mock-space-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.03em;
+    }
+
+    .mock-pinned-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mock-section-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .mock-tab {
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s;
+    }
+
+    .mock-tab.active {
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      font-weight: 500;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .mock-content-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      position: relative;
+      background: radial-gradient(circle at center, #0f0f13 0%, #030304 80%);
+    }
+
+    .screenshot-card {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      max-width: 440px;
+      width: 100%;
+    }
+
+    .screenshot-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Features Grid */
+    .features-section {
+      padding: 60px 0 100px;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .section-eyebrow {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 28px;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .feature-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-focus);
+      transform: translateY(-2px);
+    }
+
+    .feature-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin-bottom: 18px;
+    }
+
+    .feature-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .feature-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Shortcuts Table */
+    .shortcuts-section {
+      padding: 40px 0 100px;
+    }
+
+    .shortcuts-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .shortcut-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .shortcut-row:last-child {
+      border-bottom: none;
+    }
+
+    .shortcut-desc {
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .shortcut-key {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #f4f4f5;
+    }
+
+    /* Installation Note */
+    .install-box {
+      max-width: 800px;
+      margin: 0 auto 100px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      text-align: left;
+    }
+
+    .install-box h4 {
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .install-box p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .code-snippet {
+      background: #000000;
+      border: 1px solid var(--border-subtle);
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: #e4e4e7;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 60px 0 40px;
+      text-align: center;
+      background: #000000;
+    }
+
+    .footer-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+
+    .footer-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 6px;
+    }
+
+    .footer-author {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 30px;
+      font-size: 0.85rem;
+    }
+
+    .footer-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .footer-link:hover {
+      color: #fff;
+    }
+
+    .footer-copy {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 2.3rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+      }
+      .window-body {
+        flex-direction: column;
+      }
+      .mock-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      .nav-links .nav-link {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <!-- Top Navigation -->
+  <nav>
+    <div class="container nav-inner">
+      <a href="#" class="nav-brand">
+        <img src="assets/logo.png" alt="Lor Logo">
+        <span class="nav-title">Lor</span>
+        <span class="nav-version-badge">v0.1.0 Beta</span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#shortcuts" class="nav-link">Shortcuts</a>
+        <a href="https://github.com/tylertzm/lor-browser" target="_blank" rel="noopener noreferrer" class="nav-link">GitHub</a>
+        <a href="https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg" class="btn-nav-download">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download DMG
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <span class="pulse"></span>
+        <span>Liquid Glass & Monochrome Desktop Architecture</span>
+      </div>
+
+      <h1 class="hero-title">
+        The minimal macOS browser for focused minds.
+      </h1>
+
+      <p class="hero-subtitle">
+        Spaces, vertical tab management, semantic AI tidy, and an unobtrusive 15% hover peek sidebar. Handcrafted in pure black & white.
+      </p>
+
+      <div class="cta-container">
+        <div class="cta-buttons">
+          <a href="https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg" class="btn-primary" id="download-button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download for Apple Silicon (DMG)
+          </a>
+
+          <a href="https://github.com/tylertzm/lor-browser" target="_blank" rel="noopener noreferrer" class="btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+            </svg>
+            Star on GitHub
+          </a>
+        </div>
+
+        <div class="dmg-meta">
+          Lor-0.1.0-arm64.dmg • 196 MB • macOS 13.0+ (M1/M2/M3/M4)
+        </div>
+      </div>
+
+      <!-- Preview Window -->
+      <div class="preview-wrapper">
+        <div class="preview-window">
+          <div class="window-header">
+            <div class="window-dots">
+              <div class="dot dot-close"></div>
+              <div class="dot dot-min"></div>
+              <div class="dot dot-max"></div>
+            </div>
+            <div class="window-address-bar">
+              <span>lor://spaces/personal</span>
+              <span style="opacity: 0.5;">⌘L</span>
+            </div>
+          </div>
+
+          <div class="window-body">
+            <!-- Simulated Sidebar -->
+            <div class="mock-sidebar">
+              <div class="mock-space-badge">
+                <span>SPACE // PERSONAL</span>
+                <span style="font-size: 0.65rem; color: #a1a1aa;">3 TABS</span>
+              </div>
+
+              <div class="mock-pinned-section">
+                <div class="mock-section-title">Pinned</div>
+                <div class="mock-tab active">
+                  <span>📌</span> GitHub / Dashboard
+                </div>
+                <div class="mock-tab">
+                  <span>📌</span> Linear / Backlog
+                </div>
+              </div>
+
+              <div class="mock-pinned-section" style="margin-top: 10px;">
+                <div class="mock-section-title">Open Tabs</div>
+                <div class="mock-tab">
+                  <span>⌘</span> arXiv: Liquid State Engines
+                </div>
+                <div class="mock-tab">
+                  <span>⌘</span> Typescript 5.6 Release Notes
+                </div>
+              </div>
+            </div>
+
+            <!-- Spotlight Card in Content Area -->
+            <div class="mock-content-area">
+              <div class="screenshot-card">
+                <img src="assets/spaces-preview.png" alt="Lor Spaces and Menu Showcase">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-eyebrow">Engineered for Focus</div>
+        <h2 class="section-title">Pure aesthetics. Radical utility.</h2>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🪐</div>
+          <h3 class="feature-title">Isolated Spaces</h3>
+          <p class="feature-desc">
+            Organize personal life, engineering, and research into dedicated workspaces. Swipe horizontally with two fingers to glide between them seamlessly.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">✨</div>
+          <h3 class="feature-title">Semantic Tab Tidy</h3>
+          <p class="feature-desc">
+            One click categorizes dozens of open tabs into structured clusters: Tech & Dev, Research & Docs, Media, and Communications, with deduplication.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">👁️</div>
+          <h3 class="feature-title">15% Screen Peek Reveal</h3>
+          <p class="feature-desc">
+            Collapse the sidebar with <code>Cmd + S</code> for borderless web immersion. Simply hover your cursor within the left 15% edge to peek your navigation.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📌</div>
+          <h3 class="feature-title">Pinned Tab Hub</h3>
+          <p class="feature-desc">
+            Pin critical daily dashboards to the top of each space. Your workflow anchors remain persistently visible across tabs.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3 class="feature-title">Inline Omnibar</h3>
+          <p class="feature-desc">
+            Hit <code>Cmd + L</code> to search Google or jump straight to any domain. Copy sanitized, clean URLs with a single click.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3 class="feature-title">Local & Private</h3>
+          <p class="feature-desc">
+            Zero telemetry, zero cloud surveillance. Your tabs, spaces, and session state are preserved entirely on your local machine.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Shortcuts Section -->
+  <section class="shortcuts-section" id="shortcuts">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-eyebrow">Productivity at speed</div>
+        <h2 class="section-title">Keyboard & Gestures</h2>
+      </div>
+
+      <div class="shortcuts-wrapper">
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Peek / Reveal Collapsed Sidebar</span>
+          <span class="shortcut-key">Move cursor to left 15% of screen</span>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Switch between Spaces</span>
+          <span class="shortcut-key">Two-finger horizontal trackpad swipe</span>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Toggle / Lock Sidebar</span>
+          <span class="shortcut-key">⌘ + S</span>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">New Tab</span>
+          <span class="shortcut-key">⌘ + T</span>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Focus Address Bar</span>
+          <span class="shortcut-key">⌘ + L</span>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Close Current Tab</span>
+          <span class="shortcut-key">⌘ + W</span>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Navigate Back / Forward</span>
+          <span class="shortcut-key">⌘ + [ / ⌘ + ]</span>
+        </div>
+        <div class="shortcut-row">
+          <span class="shortcut-desc">Reload Page</span>
+          <span class="shortcut-key">⌘ + R</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Installation & Gatekeeper Note -->
+  <section class="container">
+    <div class="install-box">
+      <h4>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        macOS First-Launch Note
+      </h4>
+      <p>
+        Because Lor is an open-source build without an expensive commercial Apple Developer ID certificate, macOS Gatekeeper may alert you upon opening. If prompted with "Lor is damaged or can't be opened", simply open Terminal and run:
+      </p>
+      <div class="code-snippet">
+        <code>xattr -cr /Applications/Lor.app</code>
+        <button onclick="navigator.clipboard.writeText('xattr -cr /Applications/Lor.app'); alert('Copied to clipboard!');" style="background:none; border:none; color:#a1a1aa; cursor:pointer; font-size:0.75rem;">Copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <img src="assets/logo.png" alt="Lor Logo" class="footer-logo">
+      <div class="footer-title">Lor Browser</div>
+      <div class="footer-author">Conceived, designed, and engineered by <strong>Tyler Tan</strong></div>
+
+      <div class="footer-links">
+        <a href="https://github.com/tylertzm/lor-browser" class="footer-link">GitHub Repository</a>
+        <a href="https://github.com/tylertzm/lor-browser/releases" class="footer-link">Releases</a>
+        <a href="https://github.com/tylertzm/lor-browser/issues" class="footer-link">Issue Tracker</a>
+        <a href="https://github.com/tylertzm/lor-browser/blob/main/LICENSE" class="footer-link">MIT License</a>
+      </div>
+
+      <div class="footer-copy">
+        © 2026 Tyler Tan. Handcrafted with obsession. Free & open source.
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
