@@ -13,13 +13,14 @@ A minimalist desktop browser built with Electron, TypeScript, and React combinin
 
 <br>
 
-[![Download DMG](https://img.shields.io/badge/Download-Lor--0.1.0--arm64.dmg%20(196MB)-ffffff?style=for-the-badge&logo=apple&logoColor=black)](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg)
+[![macOS DMG](https://img.shields.io/badge/macOS%20DMG-Lor--0.1.0--arm64.dmg%20(196MB)-ffffff?style=for-the-badge&logo=apple&logoColor=black)](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg)
+[![Windows Setup](https://img.shields.io/badge/Windows%20Setup-Lor--Setup--0.1.0.exe%20(81MB)-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-Setup-0.1.0.exe)
 [![GitHub Release](https://img.shields.io/badge/Release-v0.1.0--Beta-181717?style=for-the-badge&logo=github)](https://github.com/tylertzm/lor-browser/releases/tag/v0.1.0)
 [![Website](https://img.shields.io/badge/Website-Live%20on%20GitHub%20Pages-brightgreen?style=for-the-badge)](https://tylertzm.github.io/lor-browser/)
 
 <br>
 
-[**Website**](https://tylertzm.github.io/lor-browser/) • [**Direct Download (.dmg)**](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg) • [**GitHub Releases**](https://github.com/tylertzm/lor-browser/releases) • [**Report Bug**](https://github.com/tylertzm/lor-browser/issues)
+[**Website**](https://tylertzm.github.io/lor-browser/) • [**Download macOS (.dmg)**](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg) • [**Download Windows (.exe)**](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-Setup-0.1.0.exe) • [**GitHub Releases**](https://github.com/tylertzm/lor-browser/releases) • [**Report Bug**](https://github.com/tylertzm/lor-browser/issues)
 
 <br>
 
@@ -74,24 +75,26 @@ A minimalist desktop browser built with Electron, TypeScript, and React combinin
 
 ## 📥 Download & Installation
 
-### Option 1: Direct DMG (Apple Silicon M1/M2/M3/M4)
+### Option 1: macOS (Apple Silicon M1/M2/M3/M4)
+👉 **[Download Lor-0.1.0-arm64.dmg (196 MB)](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg)**
 
-👉 **[Download Lor-0.1.0-arm64.dmg (Direct Download)](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg)**
+1. Open `Lor-0.1.0-arm64.dmg`.
+2. Drag `Lor.app` into **Applications**.
+3. **If Gatekeeper shows an alert on first launch:**
+   Because this is an independent open-source release without an Apple Developer ID, run this in Terminal once:
+   ```bash
+   xattr -cr /Applications/Lor.app
+   ```
+   *(Or go to System Settings → Privacy & Security → Click "Open Anyway".)*
 
-Or visit the **[GitHub Releases Page](https://github.com/tylertzm/lor-browser/releases/tag/v0.1.0)** to download manually.
+---
 
-### Installation Steps
-1. Open the downloaded `Lor-0.1.0-arm64.dmg`.
-2. Drag `Lor.app` into your **Applications** folder.
-3. Launch **Lor** from Applications or Spotlight.
+### Option 2: Windows (64-bit Windows 10/11)
+👉 **[Download Lor-Setup-0.1.0.exe (81 MB)](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-Setup-0.1.0.exe)**
 
-> **macOS Gatekeeper First-Launch Note:**
-> Because this is a community open-source release without a commercial Apple Developer ID certificate, macOS Gatekeeper may show a warning on first launch (*"Lor is damaged or can't be opened"*).
-> 
-> Simply run this command once in Terminal:
-> ```bash
-> xattr -cr /Applications/Lor.app
-> ```
+1. Double-click `Lor-Setup-0.1.0.exe`.
+2. Follow the installer instructions (creates desktop and Start Menu shortcuts).
+3. If Windows SmartScreen prompts on first launch, click **"More info"** → **"Run anyway"**.
 
 ---
 

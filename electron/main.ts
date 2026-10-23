@@ -28,11 +28,20 @@ function createPrivateWindow() {
     height: 880,
     minWidth: 900,
     minHeight: 600,
-    titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 16, y: 16 },
-    backgroundColor: '#000000',
-    vibrancy: 'under-window',
-    visualEffectState: 'active',
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
+    ...(process.platform === 'darwin'
+      ? {
+          trafficLightPosition: { x: 16, y: 16 },
+          vibrancy: 'under-window' as const,
+          visualEffectState: 'active' as const
+        }
+      : {
+          titleBarOverlay: {
+            color: '#000000',
+            symbolColor: '#ffffff',
+            height: 36
+          }
+        }),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -240,11 +249,20 @@ function createWindow() {
     height: 880,
     minWidth: 900,
     minHeight: 600,
-    titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 16, y: 16 },
-    backgroundColor: '#000000',
-    vibrancy: 'under-window',
-    visualEffectState: 'active',
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
+    ...(process.platform === 'darwin'
+      ? {
+          trafficLightPosition: { x: 16, y: 16 },
+          vibrancy: 'under-window' as const,
+          visualEffectState: 'active' as const
+        }
+      : {
+          titleBarOverlay: {
+            color: '#000000',
+            symbolColor: '#ffffff',
+            height: 36
+          }
+        }),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
