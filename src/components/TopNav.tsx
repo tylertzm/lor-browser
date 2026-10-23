@@ -6,12 +6,16 @@ import {
   Link2, 
   Check, 
   Search, 
-  Globe
+  Globe,
+  PanelLeftClose,
+  PanelLeft
 } from 'lucide-react';
 import { Tab } from '../types/browser';
 
 interface TopNavProps {
   activeTab?: Tab;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
   onGoBack: () => void;
   onGoForward: () => void;
   onReload: () => void;
@@ -20,6 +24,8 @@ interface TopNavProps {
 
 export const TopNav: React.FC<TopNavProps> = ({
   activeTab,
+  isPinned = false,
+  onTogglePin,
   onGoBack,
   onGoForward,
   onReload,
@@ -141,6 +147,16 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             <RotateCw size={15} className={activeTab?.isLoading ? 'spin-anim' : ''} />
           </button>
+
+          {onTogglePin && (
+            <button 
+              className={`icon-btn sidebar-pin-btn ${isPinned ? 'is-pinned' : 'is-unpinned'}`}
+              onClick={onTogglePin}
+              title={isPinned ? "Auto-collapse Sidebar (⌘B)" : "Pin Sidebar Open (⌘B)"}
+            >
+              {isPinned ? <PanelLeftClose size={16} /> : <PanelLeft size={16} />}
+            </button>
+          )}
         </div>
       </div>
 

@@ -9,6 +9,7 @@ import { SpaceSwitcher } from './SpaceSwitcher';
 interface SidebarProps {
   isOpen: boolean;
   isPinnedOpen: boolean;
+  onTogglePin?: () => void;
   sidebarWidth: number;
   isResizing: boolean;
   onStartResize: (e: React.MouseEvent) => void;
@@ -53,6 +54,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
   isPinnedOpen,
+  onTogglePin,
   sidebarWidth,
   isResizing,
   onStartResize,
@@ -293,6 +295,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Top Navigation & Address Bar */}
       <TopNav
         activeTab={activeTab}
+        isPinned={isPinnedOpen}
+        onTogglePin={onTogglePin}
         onGoBack={onGoBack}
         onGoForward={onGoForward}
         onReload={onReload}

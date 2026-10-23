@@ -129,6 +129,13 @@ function createApplicationMenu() {
       label: 'View',
       submenu: [
         {
+          label: 'Toggle Sidebar Auto-Collapse',
+          accelerator: 'CmdOrCtrl+B',
+          click: () => {
+            getActiveWindow()?.webContents.send('trigger-shortcut', 'toggle-sidebar');
+          }
+        },
+        {
           label: 'Open / Focus Address Bar',
           accelerator: 'CmdOrCtrl+L',
           click: () => {

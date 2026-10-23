@@ -191,7 +191,7 @@ export const App: React.FC = () => {
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [sidebarPinnedOpen, setSidebarPinnedOpen] = useState<boolean>(() => {
     const saved = localStorage.getItem('arco_sidebar_pinned');
-    return saved !== null ? saved === 'true' : true;
+    return saved !== null ? saved === 'true' : false;
   });
   const isSidebarOpen = sidebarPinnedOpen || sidebarHovered;
 
@@ -201,6 +201,9 @@ export const App: React.FC = () => {
       if (!next) {
         setSidebarHovered(false);
       }
+      try {
+        localStorage.setItem('arco_sidebar_pinned', String(next));
+      } catch {}
       return next;
     });
   };
@@ -276,28 +279,27 @@ export const App: React.FC = () => {
     }, 280);
   };
 
-  // Automatic 15% Screen Edge Hover Reveal: Smoothly slides sidebar open & shut
+  // Automatic Screen Edge Hover Reveal: Smoothly slides sidebar open & shut
   useEffect(() => {
     if (sidebarPinnedOpen) return;
 
     const handleWindowMouseMove = (e: MouseEvent) => {
       if (isResizing) return;
-      const revealThreshold = Math.max(80, window.innerWidth * 0.15);
 
-      // Moving cursor into the left 15% of the screen
-      if (e.clientX <= revealThreshold) {
+      // Moving cursor into the left edge of the screen (16px)
+      if (e.clientX <= 16) {
         if (collapseTimerRef.current) {
           clearTimeout(collapseTimerRef.current);
           collapseTimerRef.current = null;
         }
         setSidebarHovered(true);
-      } else if (e.clientX > sidebarWidth + 24) {
+      } else if (e.clientX > sidebarWidth) {
         // Moving cursor away from the open sidebar
         if (!collapseTimerRef.current) {
           collapseTimerRef.current = setTimeout(() => {
             setSidebarHovered(false);
             collapseTimerRef.current = null;
-          }, 240);
+          }, 200);
         }
       }
     };
@@ -434,7 +436,9 @@ export const App: React.FC = () => {
           setCommandBarOpen(true);
         } else if (shortcut === 'close-tab') {
           if (activeTabId) handleCloseTab(activeTabId);
-        } else if (shortcut === 'toggle-sidebar' || shortcut === 'split-screen') {
+        } else if (shortcut === 'toggle-sidebar') {
+          handleTogglePinSidebar();
+        } else if (shortcut === 'split-screen') {
           setSplitPickerOpen((prev) => !prev);
         } else if (shortcut === 'open-history') {
           if (!isPrivate) {
@@ -505,7 +509,10 @@ export const App: React.FC = () => {
         }
       }
 
-      if ((e.metaKey || e.ctrlKey) && e.key === ',') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        handleTogglePinSidebar();
+      } else if ((e.metaKey || e.ctrlKey) && e.key === ',') {
         e.preventDefault();
         setSettingsTab('appearance');
         setSettingsOpen(true);
@@ -946,6 +953,7 @@ export const App: React.FC = () => {
           tabs={tabs}
           activeTabId={activeTabId}
           isPrivate={isPrivate}
+          onEdgeHover={handleSidebarMouseEnter}
           isSidebarOpen={isSidebarOpen}
           isSplitActive={isSplitActive}
           splitLeftTabId={splitLeftTabId}

@@ -9,6 +9,7 @@ interface WebViewContainerProps {
   tabs: Tab[];
   activeTabId: string;
   isPrivate?: boolean;
+  onEdgeHover?: () => void;
   isSidebarOpen?: boolean;
   isSplitActive?: boolean;
   splitLeftTabId?: string | null;
@@ -25,6 +26,7 @@ export const WebViewContainer: React.FC<WebViewContainerProps> = ({
   tabs,
   activeTabId,
   isPrivate = false,
+  onEdgeHover,
   isSidebarOpen = true,
   isSplitActive = false,
   splitLeftTabId,
@@ -282,6 +284,7 @@ export const WebViewContainer: React.FC<WebViewContainerProps> = ({
               tab={tab}
               isActive={isVisible}
               isPrivate={isPrivate}
+              onEdgeHover={onEdgeHover}
               isSidebarOpen={isSidebarOpen}
               onOpenNewTab={onOpenNewTab}
               onUpdateTab={(updates) => onUpdateTab(tab.id, updates)}
@@ -298,6 +301,7 @@ interface WebViewItemProps {
   tab: Tab;
   isActive: boolean;
   isPrivate?: boolean;
+  onEdgeHover?: () => void;
   isSidebarOpen?: boolean;
   onOpenNewTab?: (url: string) => void;
   onUpdateTab: (updates: Partial<Tab>) => void;
@@ -308,6 +312,7 @@ const WebViewItem: React.FC<WebViewItemProps> = ({
   tab,
   isActive,
   isPrivate = false,
+  onEdgeHover,
   isSidebarOpen = true,
   onOpenNewTab,
   onUpdateTab,
@@ -458,6 +463,8 @@ const WebViewItem: React.FC<WebViewItemProps> = ({
             webview.goForward();
           }
         } catch (err) {}
+      } else if (e.channel === 'edge-hover-left') {
+        onEdgeHover?.();
       }
     };
 

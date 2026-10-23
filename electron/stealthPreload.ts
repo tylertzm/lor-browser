@@ -406,6 +406,13 @@ try {
 
   window.addEventListener('mousemove', (e) => {
     currentCursorY = Math.max(60, Math.min(window.innerHeight - 60, e.clientY));
+    if (e.clientX <= 14) {
+      try {
+        if (ipc && typeof ipc.sendToHost === 'function') {
+          ipc.sendToHost('edge-hover-left');
+        }
+      } catch {}
+    }
   }, { passive: true });
 
   window.addEventListener('wheel', (e) => {
