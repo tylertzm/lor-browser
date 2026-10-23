@@ -280,26 +280,153 @@
       color: #ffffff;
     }
 
-    /* Hero Showcase Image */
+    /* Hero Showcase Interactive Carousel */
     .hero-showcase {
       max-width: 1080px;
       margin: 0 auto 100px;
       position: relative;
     }
 
-    .showcase-frame {
+    .carousel-frame {
       border-radius: var(--radius-lg);
       padding: 2px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.03) 70%);
-      box-shadow: 0 30px 120px -20px rgba(0, 0, 0, 0.95), 0 0 60px rgba(255, 255, 255, 0.06);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.04) 70%);
+      box-shadow: 0 35px 120px -20px rgba(0, 0, 0, 0.95), 0 0 60px rgba(255, 255, 255, 0.08);
+      position: relative;
       overflow: hidden;
     }
 
-    .showcase-frame img {
-      width: 100%;
-      height: auto;
-      display: block;
+    .carousel-viewport {
+      position: relative;
       border-radius: calc(var(--radius-lg) - 2px);
+      overflow: hidden;
+      background: #09090b;
+      aspect-ratio: 16 / 10;
+    }
+
+    .carousel-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: scale(0.985);
+    }
+
+    .carousel-slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1);
+      z-index: 2;
+    }
+
+    .carousel-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Floating navigation arrows */
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(15, 15, 18, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    }
+
+    .carousel-arrow:hover {
+      background: rgba(30, 30, 36, 0.95);
+      border-color: rgba(255, 255, 255, 0.35);
+      transform: translateY(-50%) scale(1.08);
+    }
+
+    .carousel-arrow.prev {
+      left: 16px;
+    }
+
+    .carousel-arrow.next {
+      right: 16px;
+    }
+
+    /* Carousel bottom controls: Caption bar + Indicator Dots */
+    .carousel-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 20px;
+      padding: 0 8px;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .carousel-caption {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .carousel-caption-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 100px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #e4e4e7;
+    }
+
+    .carousel-caption-text {
+      font-size: 0.92rem;
+      color: var(--text-secondary);
+    }
+
+    .carousel-caption-text strong {
+      color: #ffffff;
+    }
+
+    .carousel-dots {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .carousel-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.25);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      border: none;
+      padding: 0;
+    }
+
+    .carousel-dot:hover {
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .carousel-dot.active {
+      width: 26px;
+      background: #ffffff;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
     }
 
     /* Dual Gallery Preview */
@@ -834,10 +961,60 @@
         </div>
       </div>
 
-      <!-- Hero Showcase: Real Lor Main Window -->
-      <div class="hero-showcase">
-        <div class="showcase-frame">
-          <img src="assets/lor-main-ui.png" alt="Lor Browser Main Desktop Interface">
+      <!-- Hero Showcase: Interactive Real Screenshots Carousel -->
+      <div class="hero-showcase" id="heroCarousel">
+        <div class="carousel-frame">
+          <div class="carousel-viewport">
+            <!-- Slide 1: Main Workspace -->
+            <div class="carousel-slide active" data-index="0" data-tag="Workspace" data-title="Liquid Monochrome Canvas" data-desc="Isolated spaces, pinned tabs, and inline omnibar navigation.">
+              <img src="assets/carousel-1-workspace.png" alt="Lor Liquid Monochrome Workspace">
+            </div>
+
+            <!-- Slide 2: Bicameral Split View -->
+            <div class="carousel-slide" data-index="1" data-tag="Split View" data-title="Bicameral Multitasking" data-desc="Side-by-side tabs with draggable fluid ratio dividers.">
+              <img src="assets/carousel-2-split.png" alt="Lor Bicameral Split View">
+            </div>
+
+            <!-- Slide 3: Prologue Onboarding -->
+            <div class="carousel-slide" data-index="2" data-tag="Prologue" data-title="The Internet, Reclaimed" data-desc="A distraction-free desktop sanctuary engineered for deep work.">
+              <img src="assets/carousel-3-prologue.png" alt="Lor Prologue & Philosophy">
+            </div>
+
+            <!-- Slide 4: Settings & Sovereignty -->
+            <div class="carousel-slide" data-index="3" data-tag="Preferences" data-title="Full Local Sovereignty" data-desc="Zero telemetry, Chrome SQLite sync, and deep appearance styling.">
+              <img src="assets/carousel-4-settings.png" alt="Lor Settings and Appearance">
+            </div>
+
+            <!-- Navigation Arrows -->
+            <button class="carousel-arrow prev" onclick="prevSlide()" aria-label="Previous Slide">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="carousel-arrow next" onclick="nextSlide()" aria-label="Next Slide">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Carousel Bottom Bar: Dynamic Caption + Indicator Dots -->
+        <div class="carousel-controls">
+          <div class="carousel-caption">
+            <span class="carousel-caption-tag" id="carouselTag">Workspace</span>
+            <span class="carousel-caption-text">
+              <strong id="carouselTitle">Liquid Monochrome Canvas</strong> — 
+              <span id="carouselDesc">Isolated spaces, pinned tabs, and inline omnibar navigation.</span>
+            </span>
+          </div>
+
+          <div class="carousel-dots" id="carouselDots">
+            <button class="carousel-dot active" onclick="goToSlide(0)" aria-label="Slide 1"></button>
+            <button class="carousel-dot" onclick="goToSlide(1)" aria-label="Slide 2"></button>
+            <button class="carousel-dot" onclick="goToSlide(2)" aria-label="Slide 3"></button>
+            <button class="carousel-dot" onclick="goToSlide(3)" aria-label="Slide 4"></button>
+          </div>
         </div>
       </div>
 
@@ -1058,6 +1235,97 @@
         winBtn.classList.add('btn-primary');
         macBtn.classList.remove('btn-primary');
         macBtn.classList.add('btn-secondary');
+      }
+
+      // Initialize carousel auto-advance and pause on hover
+      startCarouselTimer();
+      const carouselEl = document.getElementById('heroCarousel');
+      if (carouselEl) {
+        carouselEl.addEventListener('mouseenter', stopCarouselTimer);
+        carouselEl.addEventListener('mouseleave', startCarouselTimer);
+      }
+    });
+
+    /* Interactive Hero Carousel Engine */
+    let currentSlide = 0;
+    let carouselTimer = null;
+
+    function getCarouselElements() {
+      return {
+        slides: document.querySelectorAll('.carousel-slide'),
+        dots: document.querySelectorAll('.carousel-dot'),
+        tag: document.getElementById('carouselTag'),
+        title: document.getElementById('carouselTitle'),
+        desc: document.getElementById('carouselDesc')
+      };
+    }
+
+    function showSlide(index) {
+      const { slides, dots, tag, title, desc } = getCarouselElements();
+      if (!slides.length) return;
+
+      currentSlide = (index + slides.length) % slides.length;
+
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === currentSlide);
+      });
+
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentSlide);
+      });
+
+      const active = slides[currentSlide];
+      if (active) {
+        if (tag) tag.textContent = active.getAttribute('data-tag') || '';
+        if (title) title.textContent = active.getAttribute('data-title') || '';
+        if (desc) desc.textContent = active.getAttribute('data-desc') || '';
+      }
+    }
+
+    function nextSlide() {
+      showSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+      showSlide(currentSlide - 1);
+    }
+
+    function goToSlide(index) {
+      showSlide(index);
+      resetCarouselTimer();
+    }
+
+    function startCarouselTimer() {
+      if (!carouselTimer) {
+        carouselTimer = setInterval(nextSlide, 5000);
+      }
+    }
+
+    function stopCarouselTimer() {
+      if (carouselTimer) {
+        clearInterval(carouselTimer);
+        carouselTimer = null;
+      }
+    }
+
+    function resetCarouselTimer() {
+      stopCarouselTimer();
+      startCarouselTimer();
+    }
+
+    // Keyboard support for carousel
+    document.addEventListener('keydown', (e) => {
+      const modal = document.getElementById('macModal');
+      if (modal && modal.classList.contains('active')) {
+        if (e.key === 'Escape') closeMacModal();
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        nextSlide();
+        resetCarouselTimer();
+      } else if (e.key === 'ArrowLeft') {
+        prevSlide();
+        resetCarouselTimer();
       }
     });
 
