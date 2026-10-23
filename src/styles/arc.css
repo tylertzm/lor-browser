@@ -61,9 +61,11 @@ html, body, #root {
   position: absolute;
   top: 0;
   left: 0;
-  width: 14px;
+  width: 15vw;
+  min-width: 90px;
+  max-width: 260px;
   height: 100vh;
-  z-index: 70;
+  z-index: 55;
   pointer-events: auto;
   cursor: pointer;
 }
@@ -81,6 +83,18 @@ html, body, #root {
 
 .sidebar-hover-trigger:hover::before {
   background: rgba(255, 255, 255, 0.35);
+}
+
+/* While sidebar is peeking in auto-collapse mode, overlay catches mouse movement into the page to collapse smoothly */
+.sidebar-peek-dismiss-overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 58;
+  background: transparent;
+  pointer-events: auto;
 }
 
 /* Auto-Hiding / Draggable Resizable Almost Black Liquid Glass Sidebar */

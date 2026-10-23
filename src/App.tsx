@@ -188,10 +188,10 @@ export const App: React.FC = () => {
   const [commandBarOpen, setCommandBarOpen] = useState(false);
   const [commandBarMode, setCommandBarMode] = useState<'new-tab' | 'edit-url'>('new-tab');
   const [splitPickerOpen, setSplitPickerOpen] = useState(false);
-  const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [sidebarHovered, setSidebarHovered] = useState(true); // Start shown on launch
   const [sidebarPinnedOpen, setSidebarPinnedOpen] = useState<boolean>(() => {
     const saved = localStorage.getItem('arco_sidebar_pinned');
-    return saved !== null ? saved === 'true' : false;
+    return saved === 'true'; // Defaults to false (auto-collapse mode)
   });
   const isSidebarOpen = sidebarPinnedOpen || sidebarHovered;
 
@@ -873,10 +873,20 @@ export const App: React.FC = () => {
         />
       )}
 
+      {/* While sidebar is peeking in auto-collapse mode, moving cursor or clicking into viewport dismisses it */}
+      {!sidebarPinnedOpen && isSidebarOpen && (
+        <div 
+          className="sidebar-peek-dismiss-overlay"
+          onClick={() => setSidebarHovered(false)}
+          onMouseEnter={handleSidebarMouseLeave}
+        />
+      )}
+
       {/* Liquid Glass Sidebar */}
       <Sidebar
         isOpen={isSidebarOpen}
         isPinnedOpen={sidebarPinnedOpen}
+        onTogglePin={handleTogglePinSidebar}
         sidebarWidth={sidebarWidth}
         isResizing={isResizing}
         onStartResize={handleStartResize}
