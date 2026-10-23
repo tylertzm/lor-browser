@@ -56,14 +56,16 @@ html, body, #root {
   user-select: none;
 }
 
-/* Hover Zone to reveal sidebar automatically */
+/* Hover Zone to reveal sidebar automatically: Left 15% display edge */
 .sidebar-hover-trigger {
   position: absolute;
   top: 0;
   left: 0;
-  width: 20px;
+  width: 15vw;
+  min-width: 90px;
+  max-width: 280px;
   height: 100vh;
-  z-index: 55;
+  z-index: 70;
   pointer-events: auto;
 }
 

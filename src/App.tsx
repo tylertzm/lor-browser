@@ -254,7 +254,7 @@ export const App: React.FC = () => {
     window.addEventListener('mouseup', onMouseUp);
   };
 
-  // Debounced auto-collapse
+  // Debounced auto-collapse and 15% edge hover tracking
   const collapseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSidebarMouseEnter = () => {
@@ -272,8 +272,45 @@ export const App: React.FC = () => {
     }
     collapseTimerRef.current = setTimeout(() => {
       setSidebarHovered(false);
+      collapseTimerRef.current = null;
     }, 280);
   };
+
+  // Automatic 15% Screen Edge Hover Reveal: Smoothly slides sidebar open & shut
+  useEffect(() => {
+    if (sidebarPinnedOpen) return;
+
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      if (isResizing) return;
+      const revealThreshold = Math.max(80, window.innerWidth * 0.15);
+
+      // Moving cursor into the left 15% of the screen
+      if (e.clientX <= revealThreshold) {
+        if (collapseTimerRef.current) {
+          clearTimeout(collapseTimerRef.current);
+          collapseTimerRef.current = null;
+        }
+        setSidebarHovered(true);
+      } else if (e.clientX > sidebarWidth + 24) {
+        // Moving cursor away from the open sidebar
+        if (!collapseTimerRef.current) {
+          collapseTimerRef.current = setTimeout(() => {
+            setSidebarHovered(false);
+            collapseTimerRef.current = null;
+          }, 240);
+        }
+      }
+    };
+
+    window.addEventListener('mousemove', handleWindowMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+      if (collapseTimerRef.current) {
+        clearTimeout(collapseTimerRef.current);
+        collapseTimerRef.current = null;
+      }
+    };
+  }, [sidebarPinnedOpen, sidebarWidth, isResizing]);
 
   const [spaceActiveTabMap, setSpaceActiveTabMap] = useState<Record<string, string>>({
     'space-personal': 'tab-google-default'
@@ -889,7 +926,7 @@ export const App: React.FC = () => {
         className="arc-viewport-card"
         onMouseEnter={() => {
           if (!sidebarPinnedOpen) {
-            setSidebarHovered(false);
+            handleSidebarMouseLeave();
           }
         }}
         onMouseDown={() => {

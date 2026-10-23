@@ -563,6 +563,188 @@
       color: var(--text-muted);
     }
 
+    /* Modal Backdrop */
+    .mac-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      padding: 20px;
+    }
+
+    .mac-modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Shiny Silver-White Card */
+    .mac-shiny-modal {
+      width: 100%;
+      max-width: 580px;
+      border-radius: 24px;
+      padding: 36px 32px;
+      position: relative;
+      background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 30%, #e2e8f0 60%, #ffffff 85%, #cbd5e1 100%);
+      color: #09090b;
+      box-shadow: 0 30px 100px -10px rgba(0, 0, 0, 0.9), 0 0 50px rgba(255, 255, 255, 0.4), inset 0 2px 2px #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      transform: scale(0.95) translateY(10px);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+      text-align: left;
+    }
+
+    .mac-modal-backdrop.active .mac-shiny-modal {
+      transform: scale(1) translateY(0);
+    }
+
+    /* Shimmer light effect across the top */
+    .mac-shiny-modal::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.8) 0%, transparent 45%);
+      pointer-events: none;
+    }
+
+    .modal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: #000000;
+      color: #ffffff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .modal-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    .modal-headline {
+      font-size: 1.65rem;
+      font-weight: 800;
+      line-height: 1.2;
+      color: #09090b;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+
+    .modal-why-box {
+      background: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: #374151;
+      margin-bottom: 20px;
+    }
+
+    .modal-why-box strong {
+      color: #111827;
+    }
+
+    .modal-steps-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #4b5563;
+      margin-bottom: 8px;
+    }
+
+    .modal-code-box {
+      background: #0a0a0c;
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-code-box code {
+      color: #f4f4f5;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .modal-copy-btn {
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .modal-copy-btn:hover {
+      background: #e2e8f0;
+      transform: translateY(-1px);
+    }
+
+    .modal-alt-method {
+      font-size: 0.82rem;
+      color: #6b7280;
+      line-height: 1.45;
+      margin-bottom: 24px;
+    }
+
+    .modal-alt-method strong {
+      color: #1f2937;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .modal-close-btn {
+      background: #000000;
+      color: #ffffff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      transition: all 0.15s ease;
+    }
+
+    .modal-close-btn:hover {
+      background: #27272a;
+      transform: translateY(-1px);
+    }
+
     @media (max-width: 768px) {
       .hero-title {
         font-size: 2.4rem;
@@ -806,6 +988,45 @@
     </div>
   </section>
 
+  <!-- Shiny Silver-White Mac Installation Steps Modal -->
+  <div class="mac-modal-backdrop" id="macModal" onclick="closeMacModalOnBackdrop(event)">
+    <div class="mac-shiny-modal">
+      <div class="modal-badge">
+        <span class="modal-badge-dot"></span>
+        <span>macOS Gatekeeper Guide • Read Before Launching</span>
+      </div>
+
+      <h2 class="modal-headline">
+        Opening Lor on macOS
+      </h2>
+
+      <div class="modal-why-box">
+        <strong>Why macOS displays "Lor is damaged":</strong><br>
+        Because Lor is 100% free and community open-source without an expensive commercial Apple Developer ID ($99/year), macOS Gatekeeper tags unsigned internet downloads with a false <em>"damaged"</em> warning on first launch. Your build is completely safe, unmodified, and private.
+      </div>
+
+      <div class="modal-steps-title">
+        Step 1: Run Once in Terminal (100% Works)
+      </div>
+
+      <div class="modal-code-box">
+        <code id="terminalCommand">xattr -cr /Applications/Lor.app</code>
+        <button class="modal-copy-btn" id="modalCopyBtn" onclick="copyTerminalCommand()">Copy Command</button>
+      </div>
+
+      <div class="modal-alt-method">
+        <strong>Alternative GUI Method (No Terminal):</strong><br>
+        Open <strong>System Settings → Privacy & Security</strong>, scroll down to the Security section, and click <strong>"Open Anyway"</strong>.
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-close-btn" onclick="closeMacModal()">
+          Got It, Continue to Lor →
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer>
     <div class="container">
@@ -840,6 +1061,36 @@
       }
     });
 
+    function openMacModal() {
+      const modal = document.getElementById('macModal');
+      if (modal) modal.classList.add('active');
+    }
+
+    function closeMacModal() {
+      const modal = document.getElementById('macModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    function closeMacModalOnBackdrop(e) {
+      if (e.target.id === 'macModal') {
+        closeMacModal();
+      }
+    }
+
+    function copyTerminalCommand() {
+      const cmd = document.getElementById('terminalCommand').textContent;
+      navigator.clipboard.writeText(cmd);
+      const btn = document.getElementById('modalCopyBtn');
+      btn.textContent = '✓ Copied!';
+      btn.style.background = '#22c55e';
+      btn.style.color = '#ffffff';
+      setTimeout(() => {
+        btn.textContent = 'Copy Command';
+        btn.style.background = '#ffffff';
+        btn.style.color = '#000000';
+      }, 2500);
+    }
+
     function trackDownload(e, platform) {
       if (platform === 'win') {
         const btnText = document.getElementById('win-download-text');
@@ -854,7 +1105,12 @@
           btnText.textContent = 'Downloading macOS DMG...';
           setTimeout(() => { btnText.textContent = 'Download for macOS (.dmg)'; }, 4000);
         }
+        // Start download
         window.location.assign('https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg');
+        // Instantly pop up the shiny silver modal!
+        setTimeout(() => {
+          openMacModal();
+        }, 350);
       }
     }
   </script>
