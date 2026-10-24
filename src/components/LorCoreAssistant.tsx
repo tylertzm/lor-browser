@@ -2391,9 +2391,34 @@ export const LorCoreAssistant: React.FC<LorCoreAssistantProps> = ({
     }
 
     // LorFlow Vibe Coding & Internal MCP Autonomous Execution Engine
-    const isWorkflowIntent = /(lorflow|workflow|vibe code|fix error|workflow error|edit workflow|edit lorflow|change workflow|change lorflow|add.*node|remove.*node|delete.*node|revert.*(workflow|lorflow|version|state)|undo.*(workflow|lorflow)|run workflow|run lorflow|run repaired)/i.test(text);
+    const isWorkflowIntent = /(lorflow|workflow|vibe code|fix error|workflow error|edit workflow|edit lorflow|change workflow|change lorflow|adapt workflow|adapt lorflow|change.*prompt|new prompt|add.*node|remove.*node|delete.*node|revert.*(workflow|lorflow|version|state)|undo.*(workflow|lorflow)|run workflow|run lorflow|run repaired)/i.test(text);
     if (isWorkflowIntent) {
       const currentWorkflowNodes = LorFlowMCP.getWorkflow();
+
+      // Tool 0: Adapt / Vibe Code Workflow from Prompt
+      if (/(vibe code|adapt (the )?(workflow|lorflow)|change (the )?(workflow|lorflow)|new (workflow|lorflow)|make (a )?(workflow|lorflow)|set (the )?(workflow|lorflow)|change.*prompt|new prompt)/i.test(text)) {
+        const promptExtract = text
+          .replace(/^(please\s+)?(can\s+you\s+)?(vibe\s+code\s+(the\s+)?(workflow|lorflow)?|adapt\s+(the\s+)?(workflow|lorflow)\s+to|change\s+(the\s+)?(workflow|lorflow)\s+to|change\s+to|make\s+(a\s+)?(workflow|lorflow)\s+(about|for|to)|set\s+(the\s+)?(workflow|lorflow)\s+to|change\s+the\s+prompt\s+to|change\s+prompt\s+to|set\s+prompt\s+to)\s+/gi, '')
+          .trim();
+
+        const targetPrompt = promptExtract || text;
+        const adaptRes = LorFlowMCP.adaptWorkflow(targetPrompt);
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `msg-resp-${Date.now()}`,
+            sender: 'assistant',
+            text: `### LorFlow MCP: Workflow Adapted & Vibe Coded\n\n• **Tool Executed**: \`lorflow_adapt_workflow\`\n• **New Target Objective**: "${adaptRes.cleanQuery}"\n• **Graph Pipeline Adapted**:\n  1. **Agent Prompt Trigger**: \`${targetPrompt}\`\n  2. **Google Search**: Live query configured to \`${adaptRes.cleanQuery}\`\n  3. **Condition Gate**: Verifying search citations for ${adaptRes.cleanQuery}\n  4. **Lor AI Agent**: Synthesis task for \`${adaptRes.cleanQuery}\`\n  5. **Google Docs**: Target doc title set to \`${adaptRes.cleanQuery} - Research Summary\`\n• **Status**: Synchronized live to canvas, snapshot saved to 24h history.`,
+            actionPill: 'LorFlow MCP: Adapted',
+            suggestedChips: ['Run LorFlow', 'View LorFlow Canvas', 'Revert Version'],
+            timestamp: Date.now()
+          }
+        ]);
+        setIsGenerating(false);
+        resetConvoActivity();
+        return;
+      }
 
       // Tool 1: Revert Version
       if (/(revert|undo|restore|previous version|go back)/i.test(text)) {

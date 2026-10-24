@@ -604,7 +604,13 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
 }) => {
   const [isSignedIntoGoogle, setIsSignedIntoGoogle] = useState<boolean>(false);
   const [checkingAuth, setCheckingAuth] = useState<boolean>(true);
-  const [promptText, setPromptText] = useState<string>('search for information about ao ashi, the anime...and it will write a summary in docs');
+  const [promptText, setPromptText] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('lor_workflow_prompt');
+      if (saved && saved.trim()) return saved.trim();
+    } catch {}
+    return 'search for information about ao ashi, the anime...and it will write a summary in docs';
+  });
   const [isWriting, setIsWriting] = useState<boolean>(false);
   const [lastWrittenDocUrl, setLastWrittenDocUrl] = useState<string | null>(null);
   const [lastSynthesizedContent, setLastSynthesizedContent] = useState<string | null>(null);
@@ -628,6 +634,23 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
   // LorFlow 24-Hour Version History State
   const [historyVersions, setHistoryVersions] = useState<LorFlowSnapshot[]>(() => LorFlowMCP.getHistory());
   const [showHistoryPopover, setShowHistoryPopover] = useState<boolean>(false);
+
+  // Adapt entire LorFlow canvas to match new prompt/intent
+  const adaptWorkflowToPrompt = (rawPrompt: string, shouldExecute: boolean = false) => {
+    const res = LorFlowMCP.adaptWorkflow(rawPrompt);
+    if (res.success && res.nodes) {
+      setPromptText(rawPrompt);
+      setNodes(res.nodes);
+      setHistoryVersions(LorFlowMCP.getHistory());
+      setFeedback(`LorFlow adapted to: "${res.cleanQuery}"`);
+      setTimeout(() => setFeedback(null), 2500);
+      if (shouldExecute) {
+        setTimeout(() => {
+          handleExecuteWriteToDocs();
+        }, 60);
+      }
+    }
+  };
 
   const handleRevertVersion = (versionId: string) => {
     const res = LorFlowMCP.revertVersion(versionId);
@@ -1158,7 +1181,17 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
       if (Array.isArray(e.detail) && e.detail.length > 0) {
         setNodes(e.detail);
         localStorage.setItem('lor_workflow_json', JSON.stringify(e.detail, null, 2));
+        setHistoryVersions(LorFlowMCP.getHistory());
         setFeedback('Workflow updated from AI Chat!');
+        setTimeout(() => setFeedback(null), 2500);
+      }
+    };
+    const handlePromptUpdate = (e: any) => {
+      if (e?.detail) {
+        if (e.detail.prompt) setPromptText(e.detail.prompt);
+        if (Array.isArray(e.detail.nodes)) setNodes(e.detail.nodes);
+        setHistoryVersions(LorFlowMCP.getHistory());
+        setFeedback(`LorFlow adapted to "${e.detail.cleanQuery || 'new prompt'}"`);
         setTimeout(() => setFeedback(null), 2500);
       }
     };
@@ -1168,16 +1201,19 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
     const handleGoalTrigger = (e: any) => {
       const p = e?.detail?.prompt;
       if (typeof p === 'string' && p.trim()) {
-        setPromptText(p.trim());
+        adaptWorkflowToPrompt(p.trim(), true);
+      } else {
+        handleExecuteWriteToDocs();
       }
-      handleExecuteWriteToDocs();
     };
 
     window.addEventListener('lor-workflow-json-update', handleJsonUpdate);
+    window.addEventListener('lor-workflow-prompt-update', handlePromptUpdate);
     window.addEventListener('lor-run-workflow', handleRunTrigger);
     window.addEventListener('lor-run-goal-workflow', handleGoalTrigger);
     return () => {
       window.removeEventListener('lor-workflow-json-update', handleJsonUpdate);
+      window.removeEventListener('lor-workflow-prompt-update', handlePromptUpdate);
       window.removeEventListener('lor-run-workflow', handleRunTrigger);
       window.removeEventListener('lor-run-goal-workflow', handleGoalTrigger);
     };
@@ -1657,24 +1693,24 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
     setFeedback(`Iteration #${currentIteration}: Executing goal...`);
 
     // Initialize Autonomous Sub-Tasks Plan
-    const subTasks: AutonomousGoalSubTask[] = [
+    const subTasks: AutonomousGoalSubTask[] = isCharacterGoal ? [
       {
         id: 'task-core',
         title: 'Premise & 3 Key Figures Selection',
-        description: 'Analyze Tokyo City Esperion FC context and designate 3 central figures',
+        description: isAoAshi ? 'Analyze Tokyo City Esperion FC context and designate 3 central figures' : `Analyze ${cleanQuery} and identify 3 key subjects`,
         status: 'running',
-        details: 'Selected Ashito Aoi, Tatsuya Fukuda, and Haruhisa Kuribayashi.'
+        details: isAoAshi ? 'Selected Ashito Aoi, Tatsuya Fukuda, and Haruhisa Kuribayashi.' : `Selected 3 central figures for ${cleanQuery}.`
       },
       {
         id: 'task-personalities',
         title: 'Synthesize Deep Personality Profiles',
-        description: 'Examine psychological growth, tactical mindset, and character dynamics for all 3 figures',
+        description: `Examine psychological growth, tactical mindset, and character dynamics for ${cleanQuery}`,
         status: 'pending'
       },
       {
         id: 'task-photos',
         title: 'Acquire Verified Character Portraits',
-        description: 'Verify official high-resolution visuals for Ashito, Fukuda, and Kuribayashi',
+        description: `Verify official high-resolution visuals for ${cleanQuery}`,
         status: 'pending'
       },
       {
@@ -1689,6 +1725,38 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
         description: 'Verify 3 characters, deep personality analysis, photo verification, and document delivery',
         status: 'pending'
       }
+    ] : [
+      {
+        id: 'task-core',
+        title: 'Decompose Research Objective',
+        description: `Deconstruct research query "${cleanQuery}" into verified investigative sub-domains`,
+        status: 'running',
+        details: `Formulated primary search queries and citation constraints for "${cleanQuery}".`
+      },
+      {
+        id: 'task-personalities',
+        title: 'Live Source Scraping & Citation Retrieval',
+        description: `Query multi-engine web scrapers and gather authoritative citations for "${cleanQuery}"`,
+        status: 'pending'
+      },
+      {
+        id: 'task-photos',
+        title: 'Multi-Modal Evidence & Data Verification',
+        description: `Cross-validate factual references, benchmarks, and key metrics for "${cleanQuery}"`,
+        status: 'pending'
+      },
+      {
+        id: 'task-multimodal',
+        title: 'Synthesize Executive Dossier & Export to Google Docs',
+        description: `Compile structured executive summary, key findings, and write directly into linked Google Doc`,
+        status: 'pending'
+      },
+      {
+        id: 'task-eval',
+        title: 'Autonomous Convergence & Quality Evaluation',
+        description: `Evaluate document completeness against prompt constraints and verified sources`,
+        status: 'pending'
+      }
     ];
 
     setGoalEngine({
@@ -1696,19 +1764,19 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
       isLooping: isGoalLoopEnabled,
       iteration: currentIteration,
       maxIterations: 5,
-      objective: isCharacterGoal ? 'Research Ao Ashi, summarize 3 character personalities, and embed photos in Google Doc' : `Research and synthesize: ${cleanQuery}`,
+      objective: isCharacterGoal ? `Research ${cleanQuery}, summarize 3 character personalities, and embed photos in Google Doc` : `Research and synthesize: ${cleanQuery}`,
       tasks: subTasks,
       score: 20,
       converged: false,
       summary: `Iteration #${currentIteration}: Decomposing autonomous goal into 5 sub-tasks...`,
-      photos: AO_ASHI_CHARACTERS.map(c => ({
+      photos: isCharacterGoal ? AO_ASHI_CHARACTERS.map(c => ({
         name: c.name,
         japaneseName: c.japaneseName,
         role: c.role,
         photoUrl: c.photoUrl,
         traits: c.tacticalTraits,
         personality: c.personalitySummary
-      }))
+      })) : []
     });
     setShowGoalEngineCard(true);
 
@@ -2053,7 +2121,30 @@ Researched, synthesized, and exported directly by Lor Browser Studio.
     ${synthesisData.citations.map(r => `<li style="margin-bottom: 6px;"><strong>${r.title}</strong> — <a href="${r.url}" style="color: #2563eb;">${r.url}</a><br/><em>${r.snippet}</em></li>`).join('')}
   </ul>
 </div>
-`.trim() : undefined;
+`.trim() : `
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #111827; max-width: 800px;">
+  <h1 style="font-size: 26px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; margin-bottom: 16px;">${synthesisData.title}</h1>
+  <p style="color: #6b7280; font-size: 13px;">Generated by Lor Browser Autonomous Goal Engine • ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+  
+  <div style="background: #f9fafb; border-left: 4px solid #3b82f6; padding: 14px 18px; margin: 20px 0; border-radius: 4px;">
+    <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1e3a8a;">Executive Summary</h3>
+    <p style="margin: 0; font-size: 14px; color: #374151;">${synthesisData.summary}</p>
+  </div>
+
+  <h2 style="font-size: 20px; margin-top: 32px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px;">Key Findings & Analysis</h2>
+  ${synthesisData.keySections.map(s => `
+    <div style="margin: 20px 0;">
+      <h3 style="font-size: 16px; color: #1f2937; margin-bottom: 6px;">${s.heading}</h3>
+      <div style="font-size: 14px; color: #4b5563; white-space: pre-line;">${s.content}</div>
+    </div>
+  `).join('')}
+
+  <h3 style="font-size: 16px; margin-top: 28px;">Verified Citations</h3>
+  <ul style="font-size: 13px; color: #4b5563; padding-left: 20px;">
+    ${synthesisData.citations.map(r => `<li style="margin-bottom: 6px;"><strong>${r.title}</strong> — <a href="${r.url}" style="color: #2563eb;">${r.url}</a><br/><em>${r.snippet}</em></li>`).join('')}
+  </ul>
+</div>
+`.trim();
 
           const docTitle = isAoAshi ? 'Ao Ashi - Character Personality Dossier & Visuals' : `${cleanQuery} - Research Summary`;
 
@@ -2689,25 +2780,42 @@ Researched, synthesized, and exported directly by Lor Browser Studio.
                 className="lor-toolbar-prompt-input"
                 value={promptText}
                 onChange={(e) => {
-                  const val = e.target.value;
-                  setPromptText(val);
-                  setNodes(prev => prev.map(n => {
-                    if (n.type === 'trigger') return { ...n, config: { ...n.config, prompt: val } };
-                    if (n.type === 'ai_synthesis') return { ...n, config: { ...n.config, prompt: val } };
-                    if (n.type === 'google_search') return { ...n, config: { ...n.config, searchQuery: val, prompt: val } };
-                    return n;
-                  }));
+                  setPromptText(e.target.value);
                 }}
-                placeholder="Search or prompt agent..."
+                onBlur={() => {
+                  if (promptText.trim()) {
+                    adaptWorkflowToPrompt(promptText);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    adaptWorkflowToPrompt(promptText, true);
+                  }
+                }}
+                placeholder="Search or prompt agent (Enter to run)..."
               />
 
               <div className="lor-toolbar-prompt-actions">
                 <button
                   type="button"
+                  className="lor-toolbar-btn-subtle"
+                  onClick={() => adaptWorkflowToPrompt(promptText)}
+                  title="Adapt LorFlow nodes to current prompt"
+                >
+                  <Sparkles size={10} />
+                  <span>Adapt</span>
+                </button>
+
+                <button
+                  type="button"
                   className="lor-toolbar-btn-run"
-                  onClick={() => handleExecuteWriteToDocs()}
+                  onClick={() => {
+                    adaptWorkflowToPrompt(promptText);
+                    handleExecuteWriteToDocs();
+                  }}
                   disabled={isWriting}
-                  title="Run LorFlow"
+                  title="Run LorFlow (Enter)"
                 >
                   {isWriting ? <Clock size={10} className="spin" /> : <Play size={10} fill="currentColor" />}
                   <span>{isWriting ? 'Running' : 'Run'}</span>

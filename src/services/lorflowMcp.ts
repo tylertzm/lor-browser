@@ -266,4 +266,170 @@ export class LorFlowMCP {
   static runWorkflow(): void {
     window.dispatchEvent(new CustomEvent('lor-run-workflow'));
   }
+
+  /**
+   * Adapt the entire workflow to a new prompt/intent
+   */
+  static adaptWorkflow(rawPrompt: string): { success: boolean; nodes: any[]; message: string; cleanQuery: string } {
+    const prompt = (rawPrompt || '').trim();
+    if (!prompt) {
+      return { success: false, nodes: this.getWorkflow(), message: 'Empty prompt provided.', cleanQuery: '' };
+    }
+
+    let clean = prompt;
+    clean = clean.replace(/^(please\s+)?(search\s+for\s+information\s+about|search\s+for|find\s+information\s+about|find\s+out\s+about|look\s+up|research|summarize|write\s+a\s+summary\s+of|write\s+a\s+summary\s+about|give\s+me\s+information\s+about)\s+/gi, '');
+    clean = clean.replace(/\s+(and\s+)?(write|put|export|save|create)(\s+a\s+summary)?(\s+in|\s+to|\s+into)\s+(google\s+)?docs?.*$/gi, '');
+    clean = clean.trim() || prompt;
+
+    const shortTopic = clean.length > 22 ? clean.slice(0, 22) + '...' : clean;
+    let nodes = this.getWorkflow();
+
+    if (!nodes || nodes.length === 0) {
+      nodes = [
+        {
+          id: 'node-prompt',
+          type: 'trigger',
+          name: 'Agent Prompt',
+          subtitle: prompt.length > 22 ? prompt.slice(0, 22) + '...' : prompt,
+          description: 'Intercepts research instruction and initiates workflow execution.',
+          status: 'pending',
+          x: 60,
+          y: 180,
+          nextIds: ['node-search'],
+          config: { prompt }
+        },
+        {
+          id: 'node-search',
+          type: 'google_search',
+          name: 'Google Search',
+          subtitle: `Query: ${shortTopic}`,
+          description: `Live organic search scraping references for "${clean}".`,
+          status: 'pending',
+          x: 230,
+          y: 180,
+          nextIds: ['node-branch'],
+          config: { searchQuery: clean, prompt }
+        },
+        {
+          id: 'node-branch',
+          type: 'if_else',
+          name: 'If Results Valid',
+          subtitle: 'Branch Condition',
+          description: `Verifies verified citations exist for "${clean}" before drafting document.`,
+          status: 'pending',
+          x: 400,
+          y: 180,
+          nextIds: ['node-lor'],
+          falseNextIds: ['node-loop'],
+          config: { condition: 'citations.length > 0' }
+        },
+        {
+          id: 'node-lor',
+          type: 'ai_synthesis',
+          name: 'Lor AI Agent',
+          subtitle: `Synthesize: ${clean.slice(0, 16)}`,
+          description: `Structures research findings for "${clean}" with executive summary and source citations.`,
+          status: 'pending',
+          x: 580,
+          y: 120,
+          nextIds: ['node-docs'],
+          config: { prompt: `Synthesize research findings for "${clean}" into an executive outline with source citations.` }
+        },
+        {
+          id: 'node-loop',
+          type: 'loop',
+          name: 'Broaden Query',
+          subtitle: 'Retry Search',
+          description: `Fallback loop: expands search keywords if initial query for "${clean}" is narrow.`,
+          status: 'pending',
+          x: 580,
+          y: 250,
+          nextIds: ['node-lor'],
+          config: { iterations: 2 }
+        },
+        {
+          id: 'node-docs',
+          type: 'google_docs',
+          name: 'Google Docs',
+          subtitle: `Export: ${clean.slice(0, 16)}`,
+          description: `Creates a Google Doc titled "${clean} - Research Summary" and syncs live findings.`,
+          status: 'pending',
+          x: 770,
+          y: 180,
+          nextIds: [],
+          config: { docTitle: `${clean} - Research Summary`, prompt: `Write executive summary and verified citations for "${clean}" directly into Google Docs.` }
+        }
+      ];
+    } else {
+      nodes = nodes.map((n: any) => {
+        if (n.type === 'trigger') {
+          return {
+            ...n,
+            subtitle: prompt.length > 22 ? prompt.slice(0, 22) + '...' : prompt,
+            config: { ...(n.config || {}), prompt },
+            inputData: { ...(n.inputData || {}), prompt },
+            outputData: { ...(n.outputData || {}), prompt, queryKeywords: clean.split(/\s+/).slice(0, 5), status: 'pending' }
+          };
+        }
+        if (n.type === 'google_search') {
+          return {
+            ...n,
+            subtitle: `Query: ${shortTopic}`,
+            description: `Live organic search scraping references for "${clean}".`,
+            config: { ...(n.config || {}), searchQuery: clean, prompt },
+            inputData: { ...(n.inputData || {}), query: clean },
+            outputData: { ...(n.outputData || {}), status: 'pending' }
+          };
+        }
+        if (n.type === 'if_else') {
+          return {
+            ...n,
+            description: `Verifies verified citations exist for "${clean}" before drafting document.`
+          };
+        }
+        if (n.type === 'ai_synthesis') {
+          return {
+            ...n,
+            subtitle: `Synthesize: ${clean.slice(0, 16)}`,
+            description: `Structures research findings for "${clean}" with executive summary and source citations.`,
+            config: { ...(n.config || {}), prompt: `Synthesize research findings for "${clean}" into an executive outline with source citations.` },
+            inputData: { ...(n.inputData || {}), prompt: `Synthesize findings for: ${clean}` },
+            outputData: { ...(n.outputData || {}), topic: clean, status: 'pending' }
+          };
+        }
+        if (n.type === 'loop') {
+          return {
+            ...n,
+            description: `Fallback loop: expands search keywords if initial query for "${clean}" is narrow.`
+          };
+        }
+        if (n.type === 'google_docs') {
+          const docTitle = `${clean} - Research Summary`;
+          return {
+            ...n,
+            subtitle: `Export: ${clean.slice(0, 16)}`,
+            description: `Creates or appends findings to Google Doc titled "${docTitle}".`,
+            config: { ...(n.config || {}), docTitle, prompt: `Write executive summary and verified citations for "${clean}" directly into Google Docs.` },
+            inputData: { ...(n.inputData || {}), docTitle },
+            outputData: { ...(n.outputData || {}), docTitle, status: 'ready_to_export' }
+          };
+        }
+        return n;
+      });
+    }
+
+    try {
+      localStorage.setItem('lor_workflow_prompt', prompt);
+    } catch(e) {}
+
+    this.saveWorkflow(nodes, `Adapted to: ${shortTopic}`);
+    window.dispatchEvent(new CustomEvent('lor-workflow-prompt-update', { detail: { prompt, cleanQuery: clean, nodes } }));
+
+    return {
+      success: true,
+      nodes,
+      cleanQuery: clean,
+      message: `Adapted LorFlow to "${clean}": updated prompt trigger, live search query, AI synthesis parameters, and Google Docs title.`
+    };
+  }
 }
