@@ -8271,11 +8271,11 @@ body.light-mode .about-v2-replay-action:hover {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 60%;
-  min-width: 580px;
-  max-width: 1100px;
-  height: 50vh;
-  min-height: 360px;
+  width: 70%;
+  min-width: 620px;
+  max-width: 1240px;
+  height: 56vh;
+  min-height: 420px;
   max-height: 92vh;
   z-index: 9601;
   display: flex;
@@ -8293,6 +8293,85 @@ body.light-mode .about-v2-replay-action:hover {
   transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1), height 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   container-type: inline-size;
   container-name: lorflow-window;
+}
+
+/* Top Window Header & Window Controls (Pinned to top of workflow window) */
+.lor-workflow-window-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 32px;
+  padding: 0 14px 0 16px;
+  background: rgba(8, 8, 11, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  z-index: 105;
+  user-select: none;
+}
+
+.lor-workflow-window-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lor-workflow-window-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #a1a1aa;
+  letter-spacing: -0.01em;
+}
+
+.lor-workflow-window-mode-pill {
+  font-size: 9.5px;
+  font-weight: 500;
+  color: #71717a;
+  padding: 1.5px 6px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lor-workflow-window-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lor-workflow-window-action-btn {
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #d4d4d8;
+  font-size: 10.5px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.lor-workflow-window-action-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.lor-workflow-window-action-btn.close {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #a1a1aa;
+}
+
+.lor-workflow-window-action-btn.close:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
 }
 
 .lor-workflow-overlay-container.maximized {
@@ -8333,7 +8412,7 @@ body.light-mode .about-v2-replay-action:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 18px 0 18px;
+  padding: 8px 14px 0 14px;
   width: 100%;
   z-index: 100;
   pointer-events: none;
@@ -8348,8 +8427,8 @@ body.light-mode .about-v2-replay-action:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 10px 0 16px;
+  gap: 10px;
+  padding: 0 10px 0 14px;
   background: rgba(10, 10, 14, 0.88);
   backdrop-filter: blur(36px) saturate(190%);
   -webkit-backdrop-filter: blur(36px) saturate(190%);
@@ -8357,6 +8436,12 @@ body.light-mode .about-v2-replay-action:hover {
   border-radius: 12px;
   box-shadow: 0 14px 44px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.16);
   user-select: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.lor-workflow-unified-toolbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Toolbar Left: Brand & Auth */
@@ -8445,8 +8530,9 @@ body.light-mode .about-v2-replay-action:hover {
 
 /* Toolbar Center: Integrated Prompt Bar */
 .lor-toolbar-section.center {
-  flex: 1;
-  max-width: 640px;
+  flex: 1 1 auto;
+  min-width: 140px;
+  max-width: 440px;
   height: 34px;
   gap: 8px;
   background: rgba(0, 0, 0, 0.45);
@@ -8556,7 +8642,10 @@ body.light-mode .about-v2-replay-action:hover {
   border-radius: 4px;
   background: rgba(16, 185, 129, 0.12);
   white-space: nowrap;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .lor-status-dot-btn {
@@ -8645,7 +8734,7 @@ body.light-mode .about-v2-replay-action:hover {
 }
 
 /* Fluid Nav Adaptation for Default Smaller Window Size */
-@container lorflow-window (max-width: 960px) {
+@container lorflow-window (max-width: 1100px) {
   .lor-workflow-unified-toolbar {
     padding: 0 8px 0 12px;
     gap: 8px;
@@ -8660,19 +8749,37 @@ body.light-mode .about-v2-replay-action:hover {
   .lor-toolbar-btn-vibe,
   .lor-toolbar-btn-json,
   .lor-toolbar-btn-add {
-    padding: 0 7px;
+    padding: 0 8px;
   }
-  .lor-toolbar-auth-pill .lor-auth-label {
-    display: none;
-  }
-  .lor-toolbar-auth-pill {
-    padding: 4px 6px;
+  .lor-toolbar-feedback-compact {
+    max-width: 90px;
   }
 }
 
-@container lorflow-window (max-width: 780px) {
+@container lorflow-window (max-width: 880px) {
+  .lor-toolbar-btn-history span {
+    display: none;
+  }
+  .lor-toolbar-btn-history {
+    padding: 0 8px;
+  }
+  .lor-toolbar-btn-goal span {
+    display: none;
+  }
+  .lor-toolbar-btn-goal {
+    padding: 0 8px;
+  }
+  .lor-toolbar-doc-pill .lor-toolbar-doc-name {
+    max-width: 70px;
+  }
+  .lor-toolbar-feedback-compact {
+    display: none;
+  }
+}
+
+@container lorflow-window (max-width: 720px) {
   .lor-workflow-top-bar-container {
-    padding: 8px 10px 0 10px;
+    padding: 6px 8px 0 8px;
   }
   .lor-workflow-unified-toolbar {
     height: 42px;
@@ -8680,29 +8787,23 @@ body.light-mode .about-v2-replay-action:hover {
     gap: 6px;
   }
   .lor-toolbar-brand-title {
-    font-size: 12px;
+    display: none;
   }
   .lor-toolbar-divider {
     display: none;
   }
-  .lor-toolbar-btn-history span {
-    display: none;
-  }
-  .lor-toolbar-btn-history {
-    padding: 4px 6px;
-  }
-  .lor-toolbar-btn-goal {
-    padding: 2px 6px;
-    font-size: 10px;
-  }
   .lor-toolbar-section.center {
     height: 30px;
     padding: 0 4px 0 8px;
+    min-width: 100px;
   }
   .lor-toolbar-btn-run {
     height: 22px;
     padding: 0 8px;
     font-size: 10.5px;
+  }
+  .lor-toolbar-btn-subtle span {
+    display: none;
   }
 }
 

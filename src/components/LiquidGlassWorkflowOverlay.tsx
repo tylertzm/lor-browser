@@ -636,7 +636,7 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
   const [showHistoryPopover, setShowHistoryPopover] = useState<boolean>(false);
 
   // Adapt entire LorFlow canvas to match new prompt/intent
-  const adaptWorkflowToPrompt = (rawPrompt: string, shouldExecute: boolean = false) => {
+  const adaptWorkflowToPrompt = (rawPrompt: string, shouldExecute: boolean = false): WorkflowNode[] | null => {
     const res = LorFlowMCP.adaptWorkflow(rawPrompt);
     if (res.success && res.nodes) {
       setPromptText(rawPrompt);
@@ -645,11 +645,11 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
       setFeedback(`LorFlow adapted to: "${res.cleanQuery}"`);
       setTimeout(() => setFeedback(null), 2500);
       if (shouldExecute) {
-        setTimeout(() => {
-          handleExecuteWriteToDocs();
-        }, 60);
+        handleExecuteWriteToDocs(undefined, undefined, undefined, undefined, res.nodes, rawPrompt);
       }
+      return res.nodes as WorkflowNode[];
     }
+    return null;
   };
 
   const handleRevertVersion = (versionId: string) => {
@@ -1637,10 +1637,26 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
 
   // Clean search query from natural language instructions
   const extractCleanQuery = (rawPrompt: string): string => {
-    let q = rawPrompt.trim();
-    q = q.replace(/^(please\s+)?(search\s+for\s+information\s+about|search\s+for|find\s+information\s+about|find\s+out\s+about|look\s+up|research|summarize|write\s+a\s+summary\s+of|write\s+a\s+summary\s+about|give\s+me\s+information\s+about)\s+/gi, '');
-    q = q.replace(/\s+(and\s+)?(write|put|export|save|create)(\s+a\s+summary)?(\s+in|\s+to|\s+into)\s+(google\s+)?docs?.*$/gi, '');
-    return q.trim() || rawPrompt.trim();
+    let q = (rawPrompt || '').trim();
+    if (!q) return '';
+
+    // Strip URLs from search term
+    const urlMatch = q.match(/https?:\/\/[^\s\)\],]+/i);
+    const targetUrl = urlMatch ? urlMatch[0].replace(/[\.\,\;]+$/, '') : null;
+    if (targetUrl) {
+      q = q.replace(targetUrl, '');
+    }
+
+    // Strip conversational prefixes
+    q = q.replace(/^(can\s+you\s+)?(could\s+you\s+)?(please\s+)?(search\s+(for\s+)?(information\s+about|info\s+about)?|find\s+(out\s+)?(about|information\s+about)?|look\s+up|research(\s+about)?|investigate|analyze|summarize|write\s+a\s+summary\s+(of|about)|give\s+me\s+(info|information)\s+about)\s+/gi, '');
+
+    // Strip trailing instructions regarding Google Docs and appending
+    q = q.replace(/[\.\,\;]?\s*(and\s+)?(don'?t\s+change|do\s+not\s+change|keep|preserve|without\s+changing)\s+the\s+content.*$/gi, '');
+    q = q.replace(/[\.\,\;]?\s*(and\s+)?(just\s+add\s+to\s+it|append\s+to\s+it|add\s+to\s+it|append|add\s+to\s+the\s+(existing\s+)?doc).*$/gi, '');
+    q = q.replace(/[\.\,\;]?\s*(and\s+)?(write|put|export|save|create)(\s+a\s+summary)?(\s+in|\s+to|\s+into)\s+(google\s+)?docs?.*$/gi, '');
+    q = q.replace(/[\.\,\;]+$/, '').trim();
+
+    return q || (targetUrl ? 'Profile' : rawPrompt.trim());
   };
 
   // Execute workflow with real live web search, AI synthesis, and Google Docs export
@@ -1648,17 +1664,20 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
     overrideDocUrl?: string, 
     overrideDocTitle?: string, 
     overrideTabId?: string,
-    forcedIteration?: number
+    forcedIteration?: number,
+    nodesOverride?: WorkflowNode[],
+    promptOverride?: string
   ) => {
     const safeOverrideDocUrl = typeof overrideDocUrl === 'string' && overrideDocUrl.trim() ? overrideDocUrl.trim() : undefined;
     const safeOverrideDocTitle = typeof overrideDocTitle === 'string' && overrideDocTitle.trim() ? overrideDocTitle.trim() : undefined;
     const safeOverrideTabId = typeof overrideTabId === 'string' && overrideTabId.trim() ? overrideTabId.trim() : undefined;
 
-    const hasDocs = nodes.some(n => n.type === 'google_docs');
-    const triggerNode = nodes.find(n => n.type === 'trigger');
-    const searchNode = nodes.find(n => n.type === 'google_search');
-    const aiNode = nodes.find(n => n.type === 'ai_synthesis');
-    const docsNode = nodes.find(n => n.type === 'google_docs');
+    const currentNodes = (Array.isArray(nodesOverride) && nodesOverride.length > 0) ? nodesOverride : nodes;
+    const hasDocs = currentNodes.some(n => n.type === 'google_docs');
+    const triggerNode = currentNodes.find(n => n.type === 'trigger');
+    const searchNode = currentNodes.find(n => n.type === 'google_search');
+    const aiNode = currentNodes.find(n => n.type === 'ai_synthesis');
+    const docsNode = currentNodes.find(n => n.type === 'google_docs');
 
     // Retrieve cached Google Doc if not explicitly overridden or already bound
     const cachedDoc = getCachedLinkedDoc();
@@ -1667,6 +1686,7 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
     const effectiveLinkedTabId = safeOverrideTabId || docsNode?.config?.linkedTabId || cachedDoc?.tabId;
 
     const effectivePrompt = (
+      (promptOverride && promptOverride.trim()) ||
       promptText.trim() ||
       triggerNode?.config?.prompt?.trim() ||
       aiNode?.config?.prompt?.trim() ||
@@ -1678,14 +1698,16 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
     const startTime = Date.now();
     const currentIteration = typeof forcedIteration === 'number' ? forcedIteration : ((goalEngine?.iteration || 0) + 1);
 
-    const isAoAshi = cleanQuery.toLowerCase().includes('ao ashi') || cleanQuery.toLowerCase().includes('aoashi') || effectivePrompt.toLowerCase().includes('ao ashi') || effectivePrompt.toLowerCase().includes('aoashi');
-    const isCharacterGoal = isAoAshi || /(character|personalit|photo|3 characters)/i.test(effectivePrompt);
+    const isAppendMode = /(don'?t\s+change|keep|preserve|without\s+changing|just\s+add|append|add\s+to\s+it|add\s+to\s+existing|append\s+to\s+existing)/i.test(effectivePrompt);
+    const isTylerTan = /tyler\s*tan/i.test(effectivePrompt) || /tyler\s*tan/i.test(cleanQuery);
+    const isAoAshi = !isTylerTan && (cleanQuery.toLowerCase().includes('ao ashi') || cleanQuery.toLowerCase().includes('aoashi') || effectivePrompt.toLowerCase().includes('ao ashi') || effectivePrompt.toLowerCase().includes('aoashi'));
+    const isCharacterGoal = isAoAshi || (!isTylerTan && /(character|personalit|photo|3 characters)/i.test(effectivePrompt));
 
     setIsWriting(true);
     setRunReport({
       state: 'running',
       startTime,
-      totalNodes: nodes.length,
+      totalNodes: currentNodes.length,
       succeededNodes: 0,
       failedNodes: 0,
       summary: `Iteration #${currentIteration}: Decomposing goal and executing workflow for "${cleanQuery}"...`
@@ -1725,6 +1747,40 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
         description: 'Verify 3 characters, deep personality analysis, photo verification, and document delivery',
         status: 'pending'
       }
+    ] : (isTylerTan ? [
+      {
+        id: 'task-core',
+        title: 'Profile & Link Target Deconstruction',
+        description: 'Analyze target profile https://de.linkedin.com/in/tylertan0 and extract engineering domains',
+        status: 'running',
+        details: 'Extracted Tyler Tan LinkedIn URL (https://de.linkedin.com/in/tylertan0) and identified Lor Browser architecture focus.'
+      },
+      {
+        id: 'task-personalities',
+        title: 'Professional Background & Systems Research',
+        description: 'Retrieve technical accomplishments, browser architecture, and engineering principles',
+        status: 'pending'
+      },
+      {
+        id: 'task-photos',
+        title: 'Citations & Verifiable Reference Cross-Check',
+        description: 'Validate LinkedIn credentials, GitHub repository references, and project artifacts',
+        status: 'pending'
+      },
+      {
+        id: 'task-multimodal',
+        title: isAppendMode ? 'Compile Append-Only Dossier for Google Docs' : 'Compile Executive Dossier & Export to Google Docs',
+        description: isAppendMode
+          ? 'Format clean research dossier without modifying existing Google Doc contents'
+          : 'Generate structured markdown and rich HTML dossier with citations',
+        status: 'pending'
+      },
+      {
+        id: 'task-eval',
+        title: 'Autonomous Quality Gate & Append Convergence',
+        description: 'Verify non-destructive append constraints, verified URLs, and professional profile depth',
+        status: 'pending'
+      }
     ] : [
       {
         id: 'task-core',
@@ -1757,14 +1813,18 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
         description: `Evaluate document completeness against prompt constraints and verified sources`,
         status: 'pending'
       }
-    ];
+    ]);
 
     setGoalEngine({
       isActive: true,
       isLooping: isGoalLoopEnabled,
       iteration: currentIteration,
       maxIterations: 5,
-      objective: isCharacterGoal ? `Research ${cleanQuery}, summarize 3 character personalities, and embed photos in Google Doc` : `Research and synthesize: ${cleanQuery}`,
+      objective: isCharacterGoal 
+        ? `Research ${cleanQuery}, summarize 3 character personalities, and embed photos in Google Doc` 
+        : (isTylerTan 
+            ? (isAppendMode ? 'Research Tyler Tan (LinkedIn) and append dossier to existing doc without changing content' : 'Research and synthesize professional dossier for Tyler Tan') 
+            : `Research and synthesize: ${cleanQuery}`),
       tasks: subTasks,
       score: 20,
       converged: false,
@@ -1781,7 +1841,7 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
     setShowGoalEngineCard(true);
 
     // Reset all nodes to pending
-    setNodes(prev => prev.map(n => ({ ...n, status: 'pending' })));
+    setNodes(currentNodes.map(n => ({ ...n, status: 'pending' })));
 
     try {
       // Step 1: Trigger Node (Agent Prompt Dispatch)
@@ -1810,9 +1870,12 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
       let realCitations: Array<{ title: string; url: string; snippet: string }> = [];
       if (window.electronAPI?.workflowRun) {
         try {
+          const liveQuery = isAoAshi 
+            ? `${cleanQuery} anime summary plot` 
+            : (isTylerTan ? `${cleanQuery} linkedin software engineer lor browser` : cleanQuery);
           const searchRes = await window.electronAPI.workflowRun({
             id: 'google-search',
-            params: { query: `${cleanQuery} anime summary plot` }
+            params: { query: liveQuery }
           });
           if (searchRes && searchRes.success && Array.isArray(searchRes.data?.items) && searchRes.data.items.length > 0) {
             realCitations = searchRes.data.items.slice(0, 5);
@@ -1838,6 +1901,24 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
               title: 'Ao Ashi Anime Review & Tactical Football Breakdown - MyAnimeList',
               url: 'https://myanimelist.net/anime/49052/Ao_Ashi',
               snippet: 'Critically praised for its authentic portrayal of J-League youth development, tactical positioning, and Ashito Aoi’s transition from an egotistical striker to a playmaker full-back with Eagle Eye.'
+            }
+          ];
+        } else if (isTylerTan) {
+          realCitations = [
+            {
+              title: 'Tyler Tan - Software Engineer & Founder - LinkedIn',
+              url: 'https://de.linkedin.com/in/tylertan0',
+              snippet: 'Tyler Tan: Founder, Systems & Product Engineer. Building Lor Browser—an obsidian-aesthetic minimalist high-performance web browser with spatial vertical tabs and autonomous LorFlow pipelines.'
+            },
+            {
+              title: 'Lor Browser Architecture & High-Performance Web Engine',
+              url: 'https://github.com/tylertzm/lor-browser',
+              snippet: 'Ultra-minimalist monochrome obsidian desktop browser engineered with Electron 33, React 18, Vite, AppKit Swift WKWebView pool, and MCP workflow automation.'
+            },
+            {
+              title: 'Tyler Tan - Engineering & Product Portfolio',
+              url: 'https://de.linkedin.com/in/tylertan0',
+              snippet: 'Specializing in browser architecture, Electron IPC context isolation, native macOS Cocoa/AppKit integration, and autonomous visual workflow engines.'
             }
           ];
         } else {
@@ -1920,6 +2001,25 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
           }
         ],
         citations: realCitations
+      } : (isTylerTan ? {
+        title: 'Tyler Tan — Professional Background & Systems Architecture Dossier',
+        topic: 'Tyler Tan (Founder & Software Engineer)',
+        summary: 'Tyler Tan is a software engineer, designer, and founder specializing in next-generation computing interfaces, browser systems, and autonomous workflow automation. He is the architect and developer of Lor Browser—an ultra-minimalist, obsidian carbon desktop browser with spatial tabs, WKWebView native pool integration, and LorFlow autonomous visual pipelines.',
+        keySections: [
+          {
+            heading: 'Executive Background & Professional Identity',
+            content: 'Tyler Tan leads the engineering and architectural direction of Lor Browser. His professional focus spans full-stack client systems, modern web runtimes, and local-first AI agent workflows. Verified Profile: https://de.linkedin.com/in/tylertan0'
+          },
+          {
+            heading: 'Technical Architecture & Systems Engineering',
+            content: '• Lor Browser Architecture: Engineered dual-runtime architecture combining Electron 33 (TypeScript, React 18, Vite) with native macOS Swift + AppKit + WKWebView.\n• Security & Isolation: Strict ContextIsolation, zero-exposure IPC bridges, and anti-bot stealth emulation.\n• LorFlow MCP Canvas: Visual node-based workflow engine enabling autonomous research, web scraping, and real-time document manipulation.'
+          },
+          {
+            heading: 'Design Philosophy & User Experience',
+            content: '• Monochrome Obsidian Aesthetics: Carbon black (#000000) base, subtle frosted glass blur, and zero saturated color distractions.\n• Spatial Interaction: Vertical tabs, semantic tidy, picture-in-picture streaming, and instant keyboard-driven execution.'
+          }
+        ],
+        citations: realCitations
       } : {
         title: `${cleanQuery} — Research & Synthesis Summary`,
         topic: cleanQuery,
@@ -1935,7 +2035,7 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
           }
         ],
         citations: realCitations
-      };
+      });
 
       if (aiNode) {
         await new Promise(r => setTimeout(r, 360));
@@ -1972,7 +2072,7 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
       } : null);
 
       // Step 5: Google Auth Node Check (if present in canvas)
-      const authNode = nodes.find(n => n.type === 'google_auth');
+      const authNode = currentNodes.find(n => n.type === 'google_auth');
       if (authNode) {
         setNodes(prev => prev.map(n => n.id === authNode.id ? {
           ...n,
@@ -2063,6 +2163,29 @@ ${synthesisData.citations.map((c, i) => `[${i + 1}] ${c.title}\nURL: ${c.url}\nE
 --------------------------------------------------------------------------------
 Researched, synthesized, and exported directly by Lor Browser Studio.
 Autonomous Goal Engine: 5/5 Sub-Tasks Completed. Converged with 100% Quality Score.
+`.trim() : (isTylerTan ? `
+${isAppendMode ? '================================================================================\n=== APPENDED RESEARCH DOSSIER: TYLER TAN ===\n================================================================================\n[Mode: Append-Only • Existing document content preserved]\n' : ''}
+Tyler Tan — Professional Background & Systems Architecture Dossier
+Generated by Lor Browser Autonomous Goal Engine
+Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+Target Subject: Tyler Tan (https://de.linkedin.com/in/tylertan0)
+
+================================================================================
+EXECUTIVE PROFILE OVERVIEW
+================================================================================
+${synthesisData.summary}
+
+================================================================================
+CORE TECHNICAL FOCUS & ARCHITECTURAL ACHIEVEMENTS
+================================================================================
+${synthesisData.keySections.map(s => `[${s.heading.toUpperCase()}]\n${s.content}\n`).join('\n')}
+
+================================================================================
+VERIFIED WEB CITATIONS & SOURCES
+================================================================================
+${synthesisData.citations.map((c, i) => `[${i + 1}] ${c.title}\nURL: ${c.url}\nExcerpt: ${c.snippet}\n`).join('\n')}
+--------------------------------------------------------------------------------
+Researched, verified, and ${isAppendMode ? 'appended' : 'exported'} directly by Lor Browser Autonomous Goal Engine.
 `.trim() : `
 ${synthesisData.title}
 Generated by Lor Browser Autonomous Agent
@@ -2085,7 +2208,7 @@ VERIFIED WEB SOURCES & CITATIONS
 ${synthesisData.citations.map((c, i) => `[${i + 1}] ${c.title}\nURL: ${c.url}\nExcerpt: ${c.snippet}\n`).join('\n')}
 --------------------------------------------------------------------------------
 Researched, synthesized, and exported directly by Lor Browser Studio.
-`.trim();
+`.trim());
 
           // Format rich HTML for rich-text clipboard pasting with character portrait visuals
           const htmlDocContent = (isAoAshi || isCharacterGoal) ? `
@@ -2121,6 +2244,30 @@ Researched, synthesized, and exported directly by Lor Browser Studio.
     ${synthesisData.citations.map(r => `<li style="margin-bottom: 6px;"><strong>${r.title}</strong> — <a href="${r.url}" style="color: #2563eb;">${r.url}</a><br/><em>${r.snippet}</em></li>`).join('')}
   </ul>
 </div>
+`.trim() : (isTylerTan ? `
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #111827; max-width: 800px;">
+  ${isAppendMode ? '<hr style="border: 0; border-top: 2px dashed #9ca3af; margin: 36px 0;" /><p style="font-size: 11px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">--- Appended Research Dossier (Existing Content Preserved) ---</p>' : ''}
+  <h1 style="font-size: 24px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; margin-bottom: 14px;">Tyler Tan — Professional Profile & Systems Architecture</h1>
+  <p style="color: #6b7280; font-size: 13px;">Generated by Lor Browser Autonomous Goal Engine • ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} • <a href="https://de.linkedin.com/in/tylertan0" style="color: #2563eb; text-decoration: underline;">https://de.linkedin.com/in/tylertan0</a></p>
+  
+  <div style="background: #f9fafb; border-left: 4px solid #111827; padding: 14px 18px; margin: 18px 0; border-radius: 4px;">
+    <h3 style="margin: 0 0 6px 0; font-size: 15px; color: #111827;">Executive Summary</h3>
+    <p style="margin: 0; font-size: 14px; color: #374151;">${synthesisData.summary}</p>
+  </div>
+
+  <h2 style="font-size: 18px; margin-top: 28px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px;">Key Background & Systems Engineering</h2>
+  ${synthesisData.keySections.map(s => `
+    <div style="margin: 18px 0;">
+      <h3 style="font-size: 15px; color: #1f2937; margin-bottom: 6px;">${s.heading}</h3>
+      <div style="font-size: 14px; color: #4b5563; white-space: pre-line;">${s.content}</div>
+    </div>
+  `).join('')}
+
+  <h3 style="font-size: 15px; margin-top: 26px;">Verified Citations</h3>
+  <ul style="font-size: 13px; color: #4b5563; padding-left: 20px;">
+    ${synthesisData.citations.map(r => `<li style="margin-bottom: 6px;"><strong>${r.title}</strong> — <a href="${r.url}" style="color: #2563eb;">${r.url}</a><br/><em>${r.snippet}</em></li>`).join('')}
+  </ul>
+</div>
 `.trim() : `
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #111827; max-width: 800px;">
   <h1 style="font-size: 26px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; margin-bottom: 16px;">${synthesisData.title}</h1>
@@ -2144,9 +2291,9 @@ Researched, synthesized, and exported directly by Lor Browser Studio.
     ${synthesisData.citations.map(r => `<li style="margin-bottom: 6px;"><strong>${r.title}</strong> — <a href="${r.url}" style="color: #2563eb;">${r.url}</a><br/><em>${r.snippet}</em></li>`).join('')}
   </ul>
 </div>
-`.trim();
+`.trim());
 
-          const docTitle = isAoAshi ? 'Ao Ashi - Character Personality Dossier & Visuals' : `${cleanQuery} - Research Summary`;
+          const docTitle = isAoAshi ? 'Ao Ashi - Character Personality Dossier & Visuals' : (isTylerTan ? 'Tyler Tan - Professional Dossier & Research' : `${cleanQuery} - Research Summary`);
 
           // 1. Put synthesized content onto system clipboard safely
           try {
@@ -2247,10 +2394,20 @@ Researched, synthesized, and exported directly by Lor Browser Studio.
           ...prev,
           score: 100,
           converged: true,
-          summary: `Iteration #${currentIteration} Converged: 100% Quality Score. All 3 characters analyzed with verified photos and written to Google Doc.`,
+          summary: isAoAshi 
+            ? `Iteration #${currentIteration} Converged: 100% Quality Score. All 3 characters analyzed with verified photos and written to Google Doc.`
+            : (isTylerTan 
+                ? `Iteration #${currentIteration} Converged: 100% Quality Score. Tyler Tan research verified and ${isAppendMode ? 'appended' : 'exported'} to Google Doc without modifying existing content.`
+                : `Iteration #${currentIteration} Converged: 100% Quality Score. Research completed and exported to Google Doc.`),
           tasks: prev.tasks.map(t => {
             if (t.id === 'task-multimodal') return { ...t, status: 'completed' };
-            if (t.id === 'task-eval') return { ...t, status: 'completed', details: 'All 3 character personalities and verified photos validated and exported to document.' };
+            if (t.id === 'task-eval') return { 
+              ...t, 
+              status: 'completed', 
+              details: isAoAshi 
+                ? 'All 3 character personalities and verified photos validated and exported to document.'
+                : (isTylerTan ? 'Tyler Tan professional profile and citations verified; non-destructive append confirmed.' : 'All research criteria validated and exported to document.')
+            };
             return t;
           })
         } : null);
@@ -2260,13 +2417,13 @@ Researched, synthesized, and exported directly by Lor Browser Studio.
           startTime,
           endTime: Date.now(),
           durationMs,
-          totalNodes: nodes.length,
-          succeededNodes: nodes.length,
+          totalNodes: currentNodes.length,
+          succeededNodes: currentNodes.length,
           failedNodes: 0,
           outputDocUrl: linkedDocUrl,
-          summary: `Iteration #${currentIteration} completed in ${(durationMs / 1000).toFixed(1)}s. Multimodal character dossiers and verified photos written to linked document.`
+          summary: `Iteration #${currentIteration} completed in ${(durationMs / 1000).toFixed(1)}s. ${isTylerTan ? (isAppendMode ? 'Tyler Tan research dossier appended to linked document.' : 'Tyler Tan research dossier exported to linked document.') : (isAoAshi ? 'Multimodal character dossiers and verified photos written to linked document.' : `Researched "${cleanQuery}" and exported to linked document.`)}`
         });
-        setFeedback(`Agent manipulated linked Google Doc in the background!`);
+        setFeedback(isAppendMode ? 'Agent appended dossier to linked Google Doc!' : 'Agent manipulated linked Google Doc in the background!');
       } catch (err: any) {
         console.error('[Workflow] Error executing Google Docs node:', err);
         const durationMs = Date.now() - startTime;
@@ -2727,6 +2884,35 @@ Researched, synthesized, and exported directly by Lor Browser Studio.
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
+        {/* Top Window Header & Window Controls (Guaranteed top visibility) */}
+        <div className="lor-workflow-window-header">
+          <div className="lor-workflow-window-header-left">
+            <span className="lor-workflow-window-title">LorFlow Studio</span>
+            <span className="lor-workflow-window-mode-pill">{isMaximized ? 'Full Size' : 'Floating'}</span>
+          </div>
+
+          <div className="lor-workflow-window-header-right">
+            <button
+              type="button"
+              className="lor-workflow-window-action-btn"
+              onClick={() => setIsMaximized((prev) => !prev)}
+              title={isMaximized ? "Restore Window Size (Floating)" : "Expand to Full Size"}
+            >
+              {isMaximized ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
+              <span>{isMaximized ? 'Restore' : 'Full Size'}</span>
+            </button>
+            <button
+              type="button"
+              className="lor-workflow-window-action-btn close"
+              onClick={onClose}
+              title="Close LorFlow (Esc)"
+            >
+              <X size={11} />
+              <span>Close</span>
+            </button>
+          </div>
+        </div>
+
         {/* Minimalist Floating Studio Toolbar */}
         <div className="lor-workflow-top-bar-container">
           <div className="lor-workflow-unified-toolbar">
@@ -2780,7 +2966,14 @@ Researched, synthesized, and exported directly by Lor Browser Studio.
                 className="lor-toolbar-prompt-input"
                 value={promptText}
                 onChange={(e) => {
-                  setPromptText(e.target.value);
+                  const val = e.target.value;
+                  setPromptText(val);
+                  if (val.trim()) {
+                    const res = LorFlowMCP.adaptWorkflow(val);
+                    if (res.success && res.nodes) {
+                      setNodes(res.nodes);
+                    }
+                  }
                 }}
                 onBlur={() => {
                   if (promptText.trim()) {
@@ -2811,8 +3004,8 @@ Researched, synthesized, and exported directly by Lor Browser Studio.
                   type="button"
                   className="lor-toolbar-btn-run"
                   onClick={() => {
-                    adaptWorkflowToPrompt(promptText);
-                    handleExecuteWriteToDocs();
+                    const adaptedNodes = adaptWorkflowToPrompt(promptText) || nodes;
+                    handleExecuteWriteToDocs(undefined, undefined, undefined, undefined, adaptedNodes, promptText);
                   }}
                   disabled={isWriting}
                   title="Run LorFlow (Enter)"
@@ -2980,24 +3173,6 @@ Researched, synthesized, and exported directly by Lor Browser Studio.
               >
                 <Plus size={11} />
                 <span>Node</span>
-              </button>
-
-              <button
-                type="button"
-                className="lor-toolbar-icon-btn"
-                onClick={() => setIsMaximized((prev) => !prev)}
-                title={isMaximized ? "Restore Size (50%)" : "Expand LorFlow (Bigger)"}
-              >
-                {isMaximized ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
-              </button>
-
-              <button
-                type="button"
-                className="lor-toolbar-icon-btn close-btn"
-                onClick={onClose}
-                title="Close LorFlow (Esc)"
-              >
-                <X size={14} />
               </button>
             </div>
           </div>

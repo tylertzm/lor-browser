@@ -276,12 +276,25 @@ export class LorFlowMCP {
       return { success: false, nodes: this.getWorkflow(), message: 'Empty prompt provided.', cleanQuery: '' };
     }
 
-    let clean = prompt;
-    clean = clean.replace(/^(please\s+)?(search\s+for\s+information\s+about|search\s+for|find\s+information\s+about|find\s+out\s+about|look\s+up|research|summarize|write\s+a\s+summary\s+of|write\s+a\s+summary\s+about|give\s+me\s+information\s+about)\s+/gi, '');
-    clean = clean.replace(/\s+(and\s+)?(write|put|export|save|create)(\s+a\s+summary)?(\s+in|\s+to|\s+into)\s+(google\s+)?docs?.*$/gi, '');
-    clean = clean.trim() || prompt;
+    const isAppendMode = /(don'?t\s+change|keep|preserve|without\s+changing|just\s+add|append|add\s+to\s+it|add\s+to\s+existing|append\s+to\s+existing)/i.test(prompt);
 
-    const shortTopic = clean.length > 22 ? clean.slice(0, 22) + '...' : clean;
+    const urlMatch = prompt.match(/https?:\/\/[^\s\)\],]+/i);
+    const targetUrl = urlMatch ? urlMatch[0].replace(/[\.\,\;]+$/, '') : null;
+
+    let q = prompt;
+    if (targetUrl) {
+      q = q.replace(targetUrl, '');
+    }
+
+    q = q.replace(/^(can\s+you\s+)?(could\s+you\s+)?(please\s+)?(search\s+(for\s+)?(information\s+about|info\s+about)?|find\s+(out\s+)?(about|information\s+about)?|look\s+up|research(\s+about)?|investigate|analyze|summarize|write\s+a\s+summary\s+(of|about)|give\s+me\s+(info|information)\s+about)\s+/gi, '');
+    q = q.replace(/[\.\,\;]?\s*(and\s+)?(don'?t\s+change|do\s+not\s+change|keep|preserve|without\s+changing)\s+the\s+content.*$/gi, '');
+    q = q.replace(/[\.\,\;]?\s*(and\s+)?(just\s+add\s+to\s+it|append\s+to\s+it|add\s+to\s+it|append|add\s+to\s+the\s+(existing\s+)?doc).*$/gi, '');
+    q = q.replace(/[\.\,\;]?\s*(and\s+)?(write|put|export|save|create)(\s+a\s+summary)?(\s+in|\s+to|\s+into)\s+(google\s+)?docs?.*$/gi, '');
+    q = q.replace(/[\.\,\;]+$/, '').trim();
+
+    const clean = q || (targetUrl ? 'Profile Link' : 'Research');
+    const formattedTopic = clean.split(' ').map(w => w ? (w.charAt(0).toUpperCase() + w.slice(1)) : '').join(' ').trim() || clean;
+    const shortTopic = formattedTopic.length > 20 ? formattedTopic.slice(0, 20) + '...' : formattedTopic;
     let nodes = this.getWorkflow();
 
     if (!nodes || nodes.length === 0) {
@@ -290,8 +303,8 @@ export class LorFlowMCP {
           id: 'node-prompt',
           type: 'trigger',
           name: 'Agent Prompt',
-          subtitle: prompt.length > 22 ? prompt.slice(0, 22) + '...' : prompt,
-          description: 'Intercepts research instruction and initiates workflow execution.',
+          subtitle: `Research ${shortTopic}`,
+          description: `Intercepts research instruction for "${formattedTopic}" and initiates workflow execution.`,
           status: 'pending',
           x: 60,
           y: 180,
@@ -303,19 +316,19 @@ export class LorFlowMCP {
           type: 'google_search',
           name: 'Google Search',
           subtitle: `Query: ${shortTopic}`,
-          description: `Live organic search scraping references for "${clean}".`,
+          description: `Live organic search scraping references for "${formattedTopic}"${targetUrl ? ` (${targetUrl})` : ''}.`,
           status: 'pending',
           x: 230,
           y: 180,
           nextIds: ['node-branch'],
-          config: { searchQuery: clean, prompt }
+          config: { searchQuery: clean, targetUrl, prompt }
         },
         {
           id: 'node-branch',
           type: 'if_else',
           name: 'If Results Valid',
           subtitle: 'Branch Condition',
-          description: `Verifies verified citations exist for "${clean}" before drafting document.`,
+          description: `Verifies verified citations exist for "${formattedTopic}" before drafting document.`,
           status: 'pending',
           x: 400,
           y: 180,
@@ -327,20 +340,20 @@ export class LorFlowMCP {
           id: 'node-lor',
           type: 'ai_synthesis',
           name: 'Lor AI Agent',
-          subtitle: `Synthesize: ${clean.slice(0, 16)}`,
-          description: `Structures research findings for "${clean}" with executive summary and source citations.`,
+          subtitle: `Synthesize: ${shortTopic}`,
+          description: `Structures research findings for "${formattedTopic}" with executive summary and source citations.`,
           status: 'pending',
           x: 580,
           y: 120,
           nextIds: ['node-docs'],
-          config: { prompt: `Synthesize research findings for "${clean}" into an executive outline with source citations.` }
+          config: { prompt: `Synthesize research findings for "${formattedTopic}" into an executive outline with source citations.` }
         },
         {
           id: 'node-loop',
           type: 'loop',
           name: 'Broaden Query',
           subtitle: 'Retry Search',
-          description: `Fallback loop: expands search keywords if initial query for "${clean}" is narrow.`,
+          description: `Fallback loop: expands search keywords if initial query for "${formattedTopic}" is narrow.`,
           status: 'pending',
           x: 580,
           y: 250,
@@ -351,13 +364,21 @@ export class LorFlowMCP {
           id: 'node-docs',
           type: 'google_docs',
           name: 'Google Docs',
-          subtitle: `Export: ${clean.slice(0, 16)}`,
-          description: `Creates a Google Doc titled "${clean} - Research Summary" and syncs live findings.`,
+          subtitle: isAppendMode ? `Append: ${shortTopic}` : `Export: ${shortTopic}`,
+          description: isAppendMode
+            ? `Appends synthesized research on "${formattedTopic}" to linked Google Doc without altering existing content.`
+            : `Creates a Google Doc titled "${formattedTopic} - Research Summary" and syncs live findings.`,
           status: 'pending',
           x: 770,
           y: 180,
           nextIds: [],
-          config: { docTitle: `${clean} - Research Summary`, prompt: `Write executive summary and verified citations for "${clean}" directly into Google Docs.` }
+          config: {
+            docTitle: `${formattedTopic} - Research Summary`,
+            isAppendMode,
+            prompt: isAppendMode
+              ? `Append synthesized findings on "${formattedTopic}" directly to existing Google Doc.`
+              : `Write executive summary and verified citations for "${formattedTopic}" directly into Google Docs.`
+          }
         }
       ];
     } else {
@@ -365,7 +386,8 @@ export class LorFlowMCP {
         if (n.type === 'trigger') {
           return {
             ...n,
-            subtitle: prompt.length > 22 ? prompt.slice(0, 22) + '...' : prompt,
+            subtitle: `Research ${shortTopic}`,
+            description: `Intercepts research instruction for "${formattedTopic}" and initiates workflow execution.`,
             config: { ...(n.config || {}), prompt },
             inputData: { ...(n.inputData || {}), prompt },
             outputData: { ...(n.outputData || {}), prompt, queryKeywords: clean.split(/\s+/).slice(0, 5), status: 'pending' }
@@ -375,43 +397,54 @@ export class LorFlowMCP {
           return {
             ...n,
             subtitle: `Query: ${shortTopic}`,
-            description: `Live organic search scraping references for "${clean}".`,
-            config: { ...(n.config || {}), searchQuery: clean, prompt },
-            inputData: { ...(n.inputData || {}), query: clean },
+            description: `Live organic search scraping references for "${formattedTopic}"${targetUrl ? ` (${targetUrl})` : ''}.`,
+            config: { ...(n.config || {}), searchQuery: clean, targetUrl, prompt },
+            inputData: { ...(n.inputData || {}), query: clean, targetUrl },
             outputData: { ...(n.outputData || {}), status: 'pending' }
           };
         }
         if (n.type === 'if_else') {
           return {
             ...n,
-            description: `Verifies verified citations exist for "${clean}" before drafting document.`
+            description: `Verifies verified citations exist for "${formattedTopic}" before drafting document.`
           };
         }
         if (n.type === 'ai_synthesis') {
           return {
             ...n,
-            subtitle: `Synthesize: ${clean.slice(0, 16)}`,
-            description: `Structures research findings for "${clean}" with executive summary and source citations.`,
-            config: { ...(n.config || {}), prompt: `Synthesize research findings for "${clean}" into an executive outline with source citations.` },
-            inputData: { ...(n.inputData || {}), prompt: `Synthesize findings for: ${clean}` },
-            outputData: { ...(n.outputData || {}), topic: clean, status: 'pending' }
+            subtitle: `Synthesize: ${shortTopic}`,
+            description: `Structures research findings for "${formattedTopic}" with executive summary and source citations.`,
+            config: { ...(n.config || {}), prompt: `Synthesize research findings for "${formattedTopic}" into an executive outline with source citations.` },
+            inputData: { ...(n.inputData || {}), prompt: `Synthesize findings for: ${formattedTopic}` },
+            outputData: { ...(n.outputData || {}), topic: formattedTopic, status: 'pending' }
           };
         }
         if (n.type === 'loop') {
           return {
             ...n,
-            description: `Fallback loop: expands search keywords if initial query for "${clean}" is narrow.`
+            description: `Fallback loop: expands search keywords if initial query for "${formattedTopic}" is narrow.`
           };
         }
         if (n.type === 'google_docs') {
-          const docTitle = `${clean} - Research Summary`;
+          const docTitle = `${formattedTopic} - Research Summary`;
+          const sub = isAppendMode ? `Append: ${shortTopic}` : `Export: ${shortTopic}`;
+          const desc = isAppendMode
+            ? `Appends synthesized research on "${formattedTopic}" to linked Google Doc without altering existing content.`
+            : `Creates or appends findings to Google Doc titled "${docTitle}".`;
           return {
             ...n,
-            subtitle: `Export: ${clean.slice(0, 16)}`,
-            description: `Creates or appends findings to Google Doc titled "${docTitle}".`,
-            config: { ...(n.config || {}), docTitle, prompt: `Write executive summary and verified citations for "${clean}" directly into Google Docs.` },
-            inputData: { ...(n.inputData || {}), docTitle },
-            outputData: { ...(n.outputData || {}), docTitle, status: 'ready_to_export' }
+            subtitle: sub,
+            description: desc,
+            config: {
+              ...(n.config || {}),
+              docTitle,
+              isAppendMode,
+              prompt: isAppendMode
+                ? `Append synthesized findings on "${formattedTopic}" directly to existing Google Doc.`
+                : `Write executive summary and verified citations for "${formattedTopic}" directly into Google Docs.`
+            },
+            inputData: { ...(n.inputData || {}), docTitle, isAppendMode },
+            outputData: { ...(n.outputData || {}), docTitle, isAppendMode, status: 'ready_to_export' }
           };
         }
         return n;
@@ -423,13 +456,13 @@ export class LorFlowMCP {
     } catch(e) {}
 
     this.saveWorkflow(nodes, `Adapted to: ${shortTopic}`);
-    window.dispatchEvent(new CustomEvent('lor-workflow-prompt-update', { detail: { prompt, cleanQuery: clean, nodes } }));
+    window.dispatchEvent(new CustomEvent('lor-workflow-prompt-update', { detail: { prompt, cleanQuery: formattedTopic, nodes } }));
 
     return {
       success: true,
       nodes,
-      cleanQuery: clean,
-      message: `Adapted LorFlow to "${clean}": updated prompt trigger, live search query, AI synthesis parameters, and Google Docs title.`
+      cleanQuery: formattedTopic,
+      message: `Adapted LorFlow to "${formattedTopic}": updated prompt trigger, live search query, AI synthesis parameters, and Google Docs title.`
     };
   }
 }
