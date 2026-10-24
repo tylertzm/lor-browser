@@ -8419,10 +8419,18 @@ body.light-mode .about-v2-replay-action:hover {
   flex-shrink: 0;
 }
 
-.lor-workflow-unified-toolbar {
+.lor-workflow-two-layer-nav {
   pointer-events: auto;
   width: 100%;
   max-width: 1240px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.lor-workflow-unified-toolbar {
+  pointer-events: auto;
+  width: 100%;
   height: 48px;
   display: flex;
   align-items: center;
@@ -8442,6 +8450,126 @@ body.light-mode .about-v2-replay-action:hover {
 
 .lor-workflow-unified-toolbar::-webkit-scrollbar {
   display: none;
+}
+
+/* Layer 2: Collapsible Secondary Tools Bar */
+.lor-workflow-secondary-toolbar {
+  overflow: hidden;
+  transition: max-height 0.24s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
+              margin-top 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lor-workflow-secondary-toolbar.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  pointer-events: none;
+}
+
+.lor-workflow-secondary-toolbar.expanded {
+  max-height: 52px;
+  opacity: 1;
+  margin-top: 6px;
+  pointer-events: auto;
+}
+
+.lor-secondary-tools-inner {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  background: rgba(12, 12, 16, 0.94);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+.lor-secondary-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lor-secondary-group.left {
+  flex-shrink: 0;
+}
+
+.lor-secondary-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 2px;
+}
+
+.lor-secondary-group.center {
+  flex: 1;
+  justify-content: center;
+}
+
+.lor-secondary-meta-text {
+  font-size: 11px;
+  font-weight: 500;
+  color: #71717a;
+}
+
+.lor-secondary-group.right {
+  flex-shrink: 0;
+}
+
+.lor-toolbar-btn-tools-toggle {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e4e4e7;
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lor-toolbar-btn-tools-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.lor-toolbar-btn-tools-toggle.active {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
+}
+
+.lor-tools-badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 5px rgba(16, 185, 129, 0.8);
+}
+
+.lor-tools-chevron {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #a1a1aa;
+}
+
+.lor-tools-chevron.expanded {
+  transform: rotate(180deg);
+  color: #ffffff;
 }
 
 /* Toolbar Left: Brand & Auth */

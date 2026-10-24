@@ -634,6 +634,7 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
   // LorFlow 24-Hour Version History State
   const [historyVersions, setHistoryVersions] = useState<LorFlowSnapshot[]>(() => LorFlowMCP.getHistory());
   const [showHistoryPopover, setShowHistoryPopover] = useState<boolean>(false);
+  const [isToolsExpanded, setIsToolsExpanded] = useState<boolean>(false);
 
   // Adapt entire LorFlow canvas to match new prompt/intent
   const adaptWorkflowToPrompt = (rawPrompt: string, shouldExecute: boolean = false): WorkflowNode[] | null => {
@@ -668,6 +669,25 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
     setHistoryVersions(LorFlowMCP.getHistory());
     setFeedback(`Snapshot recorded at ${new Date(snap.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
     setTimeout(() => setFeedback(null), 2500);
+  };
+
+  // Reset workflow progress back to clean pending state
+  const handleResetProgress = () => {
+    setIsWriting(false);
+    setRunReport(null);
+    setGoalEngine(null);
+    setShowGoalEngineCard(false);
+    setFeedback('Workflow progress reset. Ready to run.');
+    setTimeout(() => setFeedback(null), 2500);
+
+    setNodes(prev => prev.map(n => ({
+      ...n,
+      status: 'pending' as WorkflowNodeStatus,
+      outputData: undefined
+    })));
+
+    const cleanNodes = nodes.map(n => ({ ...n, status: 'pending' as WorkflowNodeStatus, outputData: undefined }));
+    LorFlowMCP.saveWorkflow(cleanNodes, 'Reset Workflow Progress');
   };
 
   // "Fix with Lor in Chat" — dispatches full failure context to assistant
@@ -1696,7 +1716,7 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
 
     const cleanQuery = extractCleanQuery(effectivePrompt);
     const startTime = Date.now();
-    const currentIteration = typeof forcedIteration === 'number' ? forcedIteration : ((goalEngine?.iteration || 0) + 1);
+    const currentIteration = typeof forcedIteration === 'number' ? forcedIteration : (goalEngine?.converged ? 1 : ((goalEngine?.iteration || 0) + 1));
 
     const isAppendMode = /(don'?t\s+change|keep|preserve|without\s+changing|just\s+add|append|add\s+to\s+it|add\s+to\s+existing|append\s+to\s+existing)/i.test(effectivePrompt);
     const isTylerTan = /tyler\s*tan/i.test(effectivePrompt) || /tyler\s*tan/i.test(cleanQuery);
@@ -1840,8 +1860,8 @@ export const LiquidGlassWorkflowOverlay: React.FC<LiquidGlassWorkflowOverlayProp
     });
     setShowGoalEngineCard(true);
 
-    // Reset all nodes to pending
-    setNodes(currentNodes.map(n => ({ ...n, status: 'pending' })));
+    // Reset all nodes to pending and clear past execution output
+    setNodes(currentNodes.map(n => ({ ...n, status: 'pending' as WorkflowNodeStatus, outputData: undefined })));
 
     try {
       // Step 1: Trigger Node (Agent Prompt Dispatch)
@@ -2864,6 +2884,7 @@ Researched, synthesized, and exported directly by Lor Browser Studio.
   };
 
   const selectedNode = nodes.find(n => n.id === selectedNodeId);
+  const isFlowCompleted = nodes.length > 0 && nodes.some(n => n.status === 'completed');
 
   if (!isOpen) return null;
 
@@ -2913,267 +2934,338 @@ Researched, synthesized, and exported directly by Lor Browser Studio.
           </div>
         </div>
 
-        {/* Minimalist Floating Studio Toolbar */}
+        {/* Minimalist Floating Studio Toolbar (Collapsible Two-Layer Bar) */}
         <div className="lor-workflow-top-bar-container">
-          <div className="lor-workflow-unified-toolbar">
-            {/* Left: Minimal Brand & Status */}
-            <div className="lor-toolbar-section left">
-              <div className="lor-toolbar-brand">
-                <Layers size={13} className="lor-toolbar-brand-icon" />
-                <span className="lor-toolbar-brand-title">LorFlow</span>
-              </div>
-
-              {isSignedIntoGoogle ? (
-                <span className="lor-status-dot online" title="Google Account Active" />
-              ) : (
-                <button
-                  type="button"
-                  className="lor-status-dot-btn"
-                  onClick={handleTriggerGoogleSignIn}
-                  title={checkingAuth ? "Checking Google..." : "Click to Sign into Google"}
-                >
-                  <span className="lor-status-dot offline" />
-                </button>
-              )}
-
-              {/* Cached Document Status Pill */}
-              {cachedDocState && (
-                <div className="lor-toolbar-doc-pill" title={`Cached Document: ${cachedDocState.title} (${cachedDocState.url})`}>
-                  <FileText size={10} className="lor-doc-icon" />
-                  <span className="lor-toolbar-doc-name">
-                    {cachedDocState.title.length > 16 ? `${cachedDocState.title.slice(0, 16)}...` : cachedDocState.title}
-                  </span>
-                  <button
-                    type="button"
-                    className="lor-toolbar-doc-unlink"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleUnlinkDocument();
-                    }}
-                    title="Unlink and forget cached document"
-                  >
-                    <X size={9} />
-                  </button>
+          <div className="lor-workflow-two-layer-nav">
+            {/* Layer 1: Primary Execution & Prompt Bar */}
+            <div className="lor-workflow-unified-toolbar layer-primary">
+              {/* Left: Minimal Brand & Status */}
+              <div className="lor-toolbar-section left">
+                <div className="lor-toolbar-brand">
+                  <Layers size={13} className="lor-toolbar-brand-icon" />
+                  <span className="lor-toolbar-brand-title">LorFlow</span>
                 </div>
-              )}
-            </div>
 
-            {/* Center: Minimalist Prompt & Run */}
-            <div className="lor-toolbar-section center">
-              <Search size={12} className="lor-toolbar-search-icon" />
-              <input
-                type="text"
-                className="lor-toolbar-prompt-input"
-                value={promptText}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setPromptText(val);
-                  if (val.trim()) {
-                    const res = LorFlowMCP.adaptWorkflow(val);
-                    if (res.success && res.nodes) {
-                      setNodes(res.nodes);
-                    }
-                  }
-                }}
-                onBlur={() => {
-                  if (promptText.trim()) {
-                    adaptWorkflowToPrompt(promptText);
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    adaptWorkflowToPrompt(promptText, true);
-                  }
-                }}
-                placeholder="Search or prompt agent (Enter to run)..."
-              />
-
-              <div className="lor-toolbar-prompt-actions">
-                <button
-                  type="button"
-                  className="lor-toolbar-btn-subtle"
-                  onClick={() => adaptWorkflowToPrompt(promptText)}
-                  title="Adapt LorFlow nodes to current prompt"
-                >
-                  <Sparkles size={10} />
-                  <span>Adapt</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="lor-toolbar-btn-run"
-                  onClick={() => {
-                    const adaptedNodes = adaptWorkflowToPrompt(promptText) || nodes;
-                    handleExecuteWriteToDocs(undefined, undefined, undefined, undefined, adaptedNodes, promptText);
-                  }}
-                  disabled={isWriting}
-                  title="Run LorFlow (Enter)"
-                >
-                  {isWriting ? <Clock size={10} className="spin" /> : <Play size={10} fill="currentColor" />}
-                  <span>{isWriting ? 'Running' : 'Run'}</span>
-                </button>
-
-                {lastWrittenDocUrl && (
+                {isSignedIntoGoogle ? (
+                  <span className="lor-status-dot online" title="Google Account Active" />
+                ) : (
                   <button
                     type="button"
-                    className="lor-toolbar-btn-subtle"
-                    onClick={() => onOpenGoogleDoc ? onOpenGoogleDoc(lastWrittenDocUrl) : window.open(lastWrittenDocUrl, '_blank')}
-                    title="Open Google Doc"
+                    className="lor-status-dot-btn"
+                    onClick={handleTriggerGoogleSignIn}
+                    title={checkingAuth ? "Checking Google..." : "Click to Sign into Google"}
                   >
-                    <ExternalLink size={10} />
-                    <span>Doc</span>
+                    <span className="lor-status-dot offline" />
                   </button>
                 )}
 
-                {lastSynthesizedContent && (
-                  <button
-                    type="button"
-                    className="lor-toolbar-btn-subtle"
-                    onClick={() => {
-                      navigator.clipboard.writeText(lastSynthesizedContent);
-                      setFeedback('Copied!');
-                      setTimeout(() => setFeedback(null), 2000);
-                    }}
-                    title="Copy summary"
-                  >
-                    <Copy size={10} />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Right: Actions & Window Controls (Guaranteed visible) */}
-            <div className="lor-toolbar-section right">
-              {feedback && <span className="lor-toolbar-feedback-compact">{feedback}</span>}
-
-              {/* Loop / Reiteration Mode Toggle */}
-              <button
-                type="button"
-                className={`lor-toolbar-btn-loop ${isGoalLoopEnabled ? 'active' : ''}`}
-                onClick={() => setIsGoalLoopEnabled(prev => !prev)}
-                title={isGoalLoopEnabled ? "Autonomous Reiteration Loop Active" : "Enable Autonomous Reiteration Loop"}
-              >
-                <RefreshCw size={11} className={isWriting ? "spin" : ""} />
-                <span>{isGoalLoopEnabled ? "Loop: On" : "Loop"}</span>
-              </button>
-
-              {/* Goal Progress Toggle Pill */}
-              {goalEngine && (
-                <button
-                  type="button"
-                  className={`lor-toolbar-btn-goal ${showGoalEngineCard ? 'active' : ''}`}
-                  onClick={() => setShowGoalEngineCard(prev => !prev)}
-                  title="Toggle Autonomous Goal Progress Card"
-                >
-                  <Sparkles size={11} />
-                  <span>Goal ({goalEngine.score}%)</span>
-                </button>
-              )}
-
-              {/* LorFlow 24-Hour Version History Popover */}
-              <div className="lor-history-popover-container">
-                <button
-                  type="button"
-                  className={`lor-toolbar-btn-history ${showHistoryPopover ? 'active' : ''}`}
-                  onClick={() => setShowHistoryPopover(prev => !prev)}
-                  title="LorFlow Version History (Revert up to 24h back)"
-                >
-                  <RotateCcw size={11} />
-                  <span>History ({historyVersions.length})</span>
-                </button>
-
-                {showHistoryPopover && (
-                  <div className="lor-history-dropdown-menu" onClick={(e) => e.stopPropagation()}>
-                    <div className="lor-history-menu-header">
-                      <div className="lor-history-menu-title">
-                        <Clock size={12} />
-                        <span>LorFlow History (24h)</span>
-                      </div>
-                      <button
-                        type="button"
-                        className="lor-history-btn-snap"
-                        onClick={handleCreateSnapshot}
-                        title="Record a manual version snapshot now"
-                      >
-                        <Plus size={10} />
-                        <span>Snapshot</span>
-                      </button>
-                    </div>
-
-                    <div className="lor-history-menu-list">
-                      {historyVersions.length > 0 ? (
-                        historyVersions.map((v) => {
-                          const timeStr = new Date(v.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                          const dateStr = new Date(v.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' });
-                          const diffMinutes = Math.round((Date.now() - v.timestamp) / 60000);
-                          const relativeTime = diffMinutes < 1 ? 'Just now' : diffMinutes < 60 ? `${diffMinutes}m ago` : `${Math.round(diffMinutes / 60)}h ago`;
-
-                          return (
-                            <div key={v.id} className="lor-history-item">
-                              <div className="lor-history-item-info">
-                                <div className="lor-history-item-top">
-                                  <span className="lor-history-time">{relativeTime}</span>
-                                  <span className="lor-history-date">{dateStr} {timeStr}</span>
-                                </div>
-                                <div className="lor-history-label">{v.label}</div>
-                                <span className="lor-history-count-badge">{v.nodeCount} nodes</span>
-                              </div>
-                              <button
-                                type="button"
-                                className="lor-history-revert-btn"
-                                onClick={() => handleRevertVersion(v.id)}
-                                title={`Revert LorFlow to this state (${v.label})`}
-                              >
-                                Revert
-                              </button>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="lor-history-empty">
-                          <span>No past versions in last 24h yet. Changes auto-save snapshots here.</span>
-                        </div>
-                      )}
-                    </div>
+                {/* Cached Document Status Pill */}
+                {cachedDocState && (
+                  <div className="lor-toolbar-doc-pill" title={`Cached Document: ${cachedDocState.title} (${cachedDocState.url})`}>
+                    <FileText size={10} className="lor-doc-icon" />
+                    <span className="lor-toolbar-doc-name">
+                      {cachedDocState.title.length > 16 ? `${cachedDocState.title.slice(0, 16)}...` : cachedDocState.title}
+                    </span>
+                    <button
+                      type="button"
+                      className="lor-toolbar-doc-unlink"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUnlinkDocument();
+                      }}
+                      title="Unlink and forget cached document"
+                    >
+                      <X size={9} />
+                    </button>
                   </div>
                 )}
               </div>
 
-              {onToggleAssistant && (
+              {/* Center: Minimalist Prompt & Run */}
+              <div className="lor-toolbar-section center">
+                <Search size={12} className="lor-toolbar-search-icon" />
+                <input
+                  type="text"
+                  className="lor-toolbar-prompt-input"
+                  value={promptText}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPromptText(val);
+                    if (val.trim()) {
+                      const res = LorFlowMCP.adaptWorkflow(val);
+                      if (res.success && res.nodes) {
+                        setNodes(res.nodes);
+                      }
+                    }
+                  }}
+                  onBlur={() => {
+                    if (promptText.trim()) {
+                      adaptWorkflowToPrompt(promptText);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      adaptWorkflowToPrompt(promptText, true);
+                    }
+                  }}
+                  placeholder="Search or prompt agent (Enter to run)..."
+                />
+
+                <div className="lor-toolbar-prompt-actions">
+                  <button
+                    type="button"
+                    className="lor-toolbar-btn-subtle"
+                    onClick={() => adaptWorkflowToPrompt(promptText)}
+                    title="Adapt LorFlow nodes to current prompt"
+                  >
+                    <Sparkles size={10} />
+                    <span>Adapt</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="lor-toolbar-btn-run"
+                    onClick={() => {
+                      const adaptedNodes = adaptWorkflowToPrompt(promptText) || nodes;
+                      handleExecuteWriteToDocs(undefined, undefined, undefined, undefined, adaptedNodes, promptText);
+                    }}
+                    disabled={isWriting}
+                    title={isFlowCompleted ? "Rerun workflow from scratch" : "Run LorFlow (Enter)"}
+                  >
+                    {isWriting ? (
+                      <>
+                        <Clock size={10} className="spin" />
+                        <span>Running</span>
+                      </>
+                    ) : isFlowCompleted ? (
+                      <>
+                        <RotateCcw size={10} />
+                        <span>Rerun</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play size={10} fill="currentColor" />
+                        <span>Run</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="lor-toolbar-btn-subtle"
+                    onClick={handleResetProgress}
+                    title="Reset workflow progress and node statuses back to pending"
+                  >
+                    <RotateCcw size={10} />
+                    <span>Reset</span>
+                  </button>
+
+                  {lastWrittenDocUrl && (
+                    <button
+                      type="button"
+                      className="lor-toolbar-btn-subtle"
+                      onClick={() => onOpenGoogleDoc ? onOpenGoogleDoc(lastWrittenDocUrl) : window.open(lastWrittenDocUrl, '_blank')}
+                      title="Open Google Doc"
+                    >
+                      <ExternalLink size={10} />
+                      <span>Doc</span>
+                    </button>
+                  )}
+
+                  {lastSynthesizedContent && (
+                    <button
+                      type="button"
+                      className="lor-toolbar-btn-subtle"
+                      onClick={() => {
+                        navigator.clipboard.writeText(lastSynthesizedContent);
+                        setFeedback('Copied!');
+                        setTimeout(() => setFeedback(null), 2000);
+                      }}
+                      title="Copy summary"
+                    >
+                      <Copy size={10} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Right: Quick Indicators & Tools Drawer Toggle */}
+              <div className="lor-toolbar-section right">
+                {feedback && <span className="lor-toolbar-feedback-compact">{feedback}</span>}
+
+                {/* Goal Progress Toggle Pill */}
+                {goalEngine && (
+                  <button
+                    type="button"
+                    className={`lor-toolbar-btn-goal ${showGoalEngineCard ? 'active' : ''}`}
+                    onClick={() => setShowGoalEngineCard(prev => !prev)}
+                    title="Toggle Autonomous Goal Progress Card"
+                  >
+                    <Sparkles size={10} />
+                    <span>Goal ({goalEngine.score}%)</span>
+                  </button>
+                )}
+
+                {/* Collapsible Layer 2 Toggle Button */}
                 <button
                   type="button"
-                  className={`lor-toolbar-btn-vibe ${isAssistantOpen ? 'active' : ''}`}
-                  onClick={onToggleAssistant}
-                  title="Vibe code LorFlow with Right AI Chat"
+                  className={`lor-toolbar-btn-tools-toggle ${isToolsExpanded ? 'active' : ''}`}
+                  onClick={() => setIsToolsExpanded(prev => !prev)}
+                  title={isToolsExpanded ? "Collapse Workflow Tools bar" : "Expand Workflow Tools bar"}
                 >
-                  <Bot size={11} />
-                  <span>Vibe Code</span>
+                  <Sliders size={11} />
+                  <span>Tools</span>
+                  {isGoalLoopEnabled && <span className="lor-tools-badge-dot" title="Loop Mode Active" />}
+                  <ChevronDown size={10} className={`lor-tools-chevron ${isToolsExpanded ? 'expanded' : ''}`} />
                 </button>
-              )}
+              </div>
+            </div>
 
-              <button
-                type="button"
-                className="lor-toolbar-btn-json"
-                onClick={() => {
-                  setJsonText(JSON.stringify(nodes, null, 2));
-                  setShowJsonModal(true);
-                }}
-                title="View & Edit LorFlow JSON"
-              >
-                <Code size={11} />
-                <span>JSON</span>
-              </button>
+            {/* Layer 2: Collapsible Secondary Tools Bar */}
+            <div className={`lor-workflow-secondary-toolbar ${isToolsExpanded ? 'expanded' : 'collapsed'}`}>
+              <div className="lor-secondary-tools-inner">
+                {/* Secondary Left: Automation & Version Reversion */}
+                <div className="lor-secondary-group left">
+                  <span className="lor-secondary-group-label">Automation</span>
 
-              <button
-                type="button"
-                className="lor-toolbar-btn-add"
-                onClick={() => setShowAddNodeModal(true)}
-                title="Add Node"
-              >
-                <Plus size={11} />
-                <span>Node</span>
-              </button>
+                  {/* Loop / Reiteration Mode Toggle */}
+                  <button
+                    type="button"
+                    className={`lor-toolbar-btn-loop ${isGoalLoopEnabled ? 'active' : ''}`}
+                    onClick={() => setIsGoalLoopEnabled(prev => !prev)}
+                    title={isGoalLoopEnabled ? "Autonomous Reiteration Loop Active" : "Enable Autonomous Reiteration Loop"}
+                  >
+                    <RefreshCw size={11} className={isWriting ? "spin" : ""} />
+                    <span>{isGoalLoopEnabled ? "Loop: On" : "Reiterate Loop"}</span>
+                  </button>
+
+                  {/* LorFlow 24-Hour Version History Popover */}
+                  <div className="lor-history-popover-container">
+                    <button
+                      type="button"
+                      className={`lor-toolbar-btn-history ${showHistoryPopover ? 'active' : ''}`}
+                      onClick={() => setShowHistoryPopover(prev => !prev)}
+                      title="LorFlow Version History (Revert up to 24h back)"
+                    >
+                      <RotateCcw size={11} />
+                      <span>History ({historyVersions.length})</span>
+                    </button>
+
+                    {showHistoryPopover && (
+                      <div className="lor-history-dropdown-menu" onClick={(e) => e.stopPropagation()}>
+                        <div className="lor-history-menu-header">
+                          <div className="lor-history-menu-title">
+                            <Clock size={12} />
+                            <span>LorFlow History (24h)</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="lor-history-btn-snap"
+                            onClick={handleCreateSnapshot}
+                            title="Record a manual version snapshot now"
+                          >
+                            <Plus size={10} />
+                            <span>Snapshot</span>
+                          </button>
+                        </div>
+
+                        <div className="lor-history-menu-list">
+                          {historyVersions.length > 0 ? (
+                            historyVersions.map((v) => {
+                              const timeStr = new Date(v.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                              const dateStr = new Date(v.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' });
+                              const diffMinutes = Math.round((Date.now() - v.timestamp) / 60000);
+                              const relativeTime = diffMinutes < 1 ? 'Just now' : diffMinutes < 60 ? `${diffMinutes}m ago` : `${Math.round(diffMinutes / 60)}h ago`;
+
+                              return (
+                                <div key={v.id} className="lor-history-item">
+                                  <div className="lor-history-item-info">
+                                    <div className="lor-history-item-top">
+                                      <span className="lor-history-time">{relativeTime}</span>
+                                      <span className="lor-history-date">{dateStr} {timeStr}</span>
+                                    </div>
+                                    <div className="lor-history-label">{v.label}</div>
+                                    <span className="lor-history-count-badge">{v.nodeCount} nodes</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="lor-history-revert-btn"
+                                    onClick={() => handleRevertVersion(v.id)}
+                                    title={`Revert LorFlow to this state (${v.label})`}
+                                  >
+                                    Revert
+                                  </button>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="lor-history-empty">
+                              <span>No past versions in last 24h yet. Changes auto-save snapshots here.</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Reset Progress Button in Secondary Bar */}
+                  <button
+                    type="button"
+                    className="lor-toolbar-btn-subtle"
+                    onClick={handleResetProgress}
+                    title="Reset all node statuses and clear execution cache"
+                  >
+                    <RotateCcw size={10} />
+                    <span>Reset Progress</span>
+                  </button>
+                </div>
+
+                {/* Secondary Center: Pipeline Health & Node Counts */}
+                <div className="lor-secondary-group center">
+                  <span className="lor-secondary-meta-text">
+                    {nodes.length} Canvas Nodes • {nodes.filter(n => n.status === 'completed').length} Executed
+                  </span>
+                </div>
+
+                {/* Secondary Right: Authoring & Assistant Tools */}
+                <div className="lor-secondary-group right">
+                  {onToggleAssistant && (
+                    <button
+                      type="button"
+                      className={`lor-toolbar-btn-vibe ${isAssistantOpen ? 'active' : ''}`}
+                      onClick={onToggleAssistant}
+                      title="Vibe code LorFlow with Right AI Chat"
+                    >
+                      <Bot size={11} />
+                      <span>Vibe Code</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    className="lor-toolbar-btn-json"
+                    onClick={() => {
+                      setJsonText(JSON.stringify(nodes, null, 2));
+                      setShowJsonModal(true);
+                    }}
+                    title="View & Edit LorFlow JSON"
+                  >
+                    <Code size={11} />
+                    <span>JSON Schema</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="lor-toolbar-btn-add"
+                    onClick={() => setShowAddNodeModal(true)}
+                    title="Add Node to Canvas"
+                  >
+                    <Plus size={11} />
+                    <span>Add Node</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
