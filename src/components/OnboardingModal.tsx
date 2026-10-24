@@ -10,75 +10,77 @@ import {
   History,
   Layers,
   Sparkles,
-  Search
+  Search,
+  Cpu,
+  Snowflake,
+  PanelLeftClose,
+  Code2,
+  Palette,
+  BookOpen,
+  Feather,
+  Sun,
+  Zap,
+  Moon
 } from 'lucide-react';
 import { LOR_LOGO } from '../assets/logoBase64';
 import { JupiterIcon } from './SpaceSwitcher';
+import { Space } from '../types/browser';
 
 interface OnboardingModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenAbout?: () => void;
+  onUpdateSpaces?: (spaces: Space[]) => void;
 }
 
-interface SlideData {
-  id: number;
-  tag: string;
-  headline: string;
-  subhead: string;
-  story: string;
-}
+type Archetype = 'engineering' | 'design' | 'research' | 'calm';
+type Rhythm = 'morning' | 'focus' | 'night';
+type TabStyle = 'hoarder' | 'minimalist';
 
-const SLIDES: SlideData[] = [
-  {
-    id: 0,
-    tag: 'PROLOGUE',
-    headline: 'The Internet, Reclaimed.',
-    subhead: 'A calm sanctuary for explorers, thinkers, and seekers of lore.',
-    story:
-      'We spend our lives inside browsers, yet most browsers feel like noisy office cubicles. Lor was conceived to return to the wonder of the early web: a private study overlooking the cosmos—monochrome, distraction-free, and crafted with obsessive care.'
+const ARCHETYPE_CONFIG: Record<Archetype, { label: string; icon: any; desc: string; spaces: string[] }> = {
+  engineering: {
+    label: 'Engineering & Code',
+    icon: Code2,
+    desc: 'Compilers, GitHub, ArXiv, telemetry, and technical documentation.',
+    spaces: ['Personal', 'Engineering', 'Research']
   },
-  {
-    id: 1,
-    tag: 'SPATIAL ARCHITECTURE',
-    headline: 'Architecture for the Mind.',
-    subhead: 'Move between Work, Research, and Labs with a glide.',
-    story:
-      'Tabs should not be an endless graveyard of horizontal clutter. In Lor, your contexts live in dedicated Spaces. Switch effortlessly with trackpad gestures or orbital dock dots, while the liquid sidebar dissolves when you want pure focus.'
+  design: {
+    label: 'Design & Vision',
+    icon: Palette,
+    desc: 'Figma, typography, liquid glass interactions, and visual inspiration.',
+    spaces: ['Personal', 'Studio', 'Inspiration']
   },
-  {
-    id: 2,
-    tag: 'BICAMERAL SIGHT',
-    headline: 'Two Worlds, Side by Side.',
-    subhead: 'Compare, cross-reference, and create without alt-tab fatigue.',
-    story:
-      'True deep work happens in parallel. Drag any tab or press Cmd+S to launch dual viewport split view. Read research while writing, or inspect code alongside live interfaces in high-resolution liquid glass.'
+  research: {
+    label: 'Deep Research & Writing',
+    icon: BookOpen,
+    desc: 'Papers, philosophy, long-form essays, and knowledge archives.',
+    spaces: ['Personal', 'Literature', 'Drafts']
   },
-  {
-    id: 3,
-    tag: 'SOVEREIGN ARCHIVE',
-    headline: 'Your History, Locally Sovereign.',
-    subhead: 'Instant Google Chrome sync with zero telemetry.',
-    story:
-      'Never lose a trail. Lor connects directly to your local Google Chrome history snapshot, paired with live Omnibox search completions. Everything stays strictly on your Mac—untouchable and completely private.'
-  },
-  {
-    id: 4,
-    tag: 'ARTISANAL CRAFT',
-    headline: 'Welcome to Lor.',
-    subhead: 'Conceived, designed, and engineered by Tyler Tan.',
-    story:
-      'Lor is an independent labor of love—built for people who care about taste, typography, fluid trackpad physics, and how software feels under their fingers. Step inside your new universe of browsing.'
+  calm: {
+    label: 'Calm Sanctuary',
+    icon: Feather,
+    desc: 'Minimalist mindful browsing, serene essays, and quiet discovery.',
+    spaces: ['Personal', 'Morning', 'Harbor']
   }
-];
+};
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   isOpen,
   onClose,
-  onOpenAbout
+  onOpenAbout,
+  onUpdateSpaces
 }) => {
   const [slideIndex, setSlideIndex] = useState(0);
-  const [activePreviewSpace, setActivePreviewSpace] = useState<'Personal' | 'Work' | 'Labs'>('Personal');
+
+  // User Profile State
+  const [userName, setUserName] = useState<string>(() => localStorage.getItem('lor_user_name') || '');
+  const [archetype, setArchetype] = useState<Archetype>(() => (localStorage.getItem('lor_user_archetype') as Archetype) || 'engineering');
+  const [rhythm, setRhythm] = useState<Rhythm>(() => (localStorage.getItem('lor_user_rhythm') as Rhythm) || 'focus');
+  const [tabStyle, setTabStyle] = useState<TabStyle>(() => (localStorage.getItem('lor_user_tab_style') as TabStyle) || 'hoarder');
+  
+  // Interactive preview state for Slide 2 & Slide 3
+  const [activePreviewSpaceIndex, setActivePreviewSpaceIndex] = useState(0);
+  const [testVaultQuery, setTestVaultQuery] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -91,6 +93,15 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept Enter if user is typing in the name input on slide 0
+      if (e.target instanceof HTMLInputElement && e.key !== 'Escape') {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleNext();
+        }
+        return;
+      }
+
       if (e.key === 'Escape') {
         e.preventDefault();
         handleFinish();
@@ -105,20 +116,19 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, slideIndex]);
+  }, [isOpen, slideIndex, userName, archetype, rhythm, tabStyle]);
 
   if (!isOpen) return null;
 
-  const safeIndex = Math.max(0, Math.min(SLIDES.length - 1, slideIndex));
-  const currentSlide = SLIDES[safeIndex] || SLIDES[0];
-  const isFirst = safeIndex === 0;
-  const isLast = safeIndex === SLIDES.length - 1;
+  const totalSlides = 5;
+  const isFirst = slideIndex === 0;
+  const isLast = slideIndex === totalSlides - 1;
 
   const handleNext = () => {
     if (isLast) {
       handleFinish();
     } else {
-      setSlideIndex((prev) => Math.min(SLIDES.length - 1, prev + 1));
+      setSlideIndex((prev) => Math.min(totalSlides - 1, prev + 1));
     }
   };
 
@@ -129,6 +139,22 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   const handleFinish = () => {
     try {
       localStorage.setItem('lor_onboarding_v2_completed', 'true');
+      localStorage.setItem('lor_user_name', userName.trim());
+      localStorage.setItem('lor_user_archetype', archetype);
+      localStorage.setItem('lor_user_rhythm', rhythm);
+      localStorage.setItem('lor_user_tab_style', tabStyle);
+
+      // Tailor default spaces to chosen archetype
+      const spaceNames = ARCHETYPE_CONFIG[archetype].spaces;
+      const tailoredSpaces: Space[] = spaceNames.map((name, i) => ({
+        id: `space-${name.toLowerCase()}-${i}`,
+        name,
+        themeColor: '#ffffff'
+      }));
+
+      if (onUpdateSpaces) {
+        onUpdateSpaces(tailoredSpaces);
+      }
     } catch {}
     onClose();
   };
@@ -142,9 +168,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     }
   };
 
+  const currentSpaces = ARCHETYPE_CONFIG[archetype].spaces;
+  const displayName = userName.trim() ? userName.trim() : 'Explorer';
+
   return (
     <div className="lor-onboarding-canvas">
-      {/* Subtle organic ambient background depth */}
+      {/* Organic ambient background depth */}
       <div className="lor-ambient-vignette" />
       <div className="lor-ambient-orb" />
 
@@ -158,12 +187,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
         {/* Stepper Dots (Arc Style) */}
         <div className="lor-onboard-stepper">
-          {SLIDES.map((s, idx) => (
+          {[0, 1, 2, 3, 4].map((idx) => (
             <button
-              key={s.id}
+              key={idx}
               className={`lor-onboard-step-dot ${idx === slideIndex ? 'active' : ''} ${idx < slideIndex ? 'done' : ''}`}
               onClick={() => setSlideIndex(idx)}
-              title={s.tag}
+              title={`Chapter ${idx + 1}`}
             />
           ))}
         </div>
@@ -174,64 +203,180 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         </button>
       </header>
 
-      {/* Center Hero Stage (Arc-inspired bespoke presentation) */}
+      {/* Center Hero Stage */}
       <main className="lor-onboard-stage">
-        {/* Slide 0: Prologue — Meet Lor */}
-        {safeIndex === 0 && (
-          <div className="lor-slide-content prologue-stage">
+        {/* =========================================================================
+            SLIDE 0: IDENTITY & ARCHETYPE
+           ========================================================================= */}
+        {slideIndex === 0 && (
+          <div className="lor-slide-content interactive-stage">
             <div className="lor-hero-logo-wrap">
               <div className="lor-hero-logo-halo" />
               <img src={LOR_LOGO} alt="Lor Logo" className="lor-hero-logo" />
             </div>
 
-            <span className="lor-slide-tag">{currentSlide.tag}</span>
-            <h1 className="lor-slide-headline">{currentSlide.headline}</h1>
-            <p className="lor-slide-subhead">{currentSlide.subhead}</p>
-            <p className="lor-slide-story">{currentSlide.story}</p>
+            <span className="lor-slide-tag">CHAPTER I • IDENTITY</span>
+            <h1 className="lor-slide-headline">Welcome to Lor.</h1>
+            <p className="lor-slide-subhead">A calm, bespoke browser engineered for continuous flow.</p>
 
-            <div className="lor-prologue-pills">
-              <span className="lor-feature-chip">
-                <JupiterIcon size={13} />
-                <span>Spatial Tabs</span>
-              </span>
-              <span className="lor-feature-chip">
-                <Columns2 size={13} />
-                <span>Bicameral Split View</span>
-              </span>
-              <span className="lor-feature-chip">
-                <History size={13} />
-                <span>Google Chrome SQLite Sync</span>
-              </span>
-              <span className="lor-feature-chip">
-                <Compass size={13} />
-                <span>Fluid 1:1 Page Swipe</span>
-              </span>
+            {/* User Name Input */}
+            <div className="lor-user-input-wrap">
+              <label className="lor-input-label">What should Lor call you?</label>
+              <input
+                type="text"
+                className="lor-interactive-input"
+                placeholder="Your name or call sign (e.g. Tyler)"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                autoFocus
+              />
             </div>
-          </div>
-        )}
 
-        {/* Slide 1: Spaces Architecture */}
-        {safeIndex === 1 && (
-          <div className="lor-slide-content split-stage">
-            <div className="lor-text-column">
-              <span className="lor-slide-tag">{currentSlide.tag}</span>
-              <h1 className="lor-slide-headline">{currentSlide.headline}</h1>
-              <p className="lor-slide-subhead">{currentSlide.subhead}</p>
-              <p className="lor-slide-story">{currentSlide.story}</p>
-              
-              <div className="lor-interactive-hint">
-                <span className="lor-hint-label">Try switching spaces:</span>
-                <div className="lor-space-switcher-preview">
-                  {(['Personal', 'Work', 'Labs'] as const).map((space) => (
-                    <button
-                      key={space}
-                      className={`lor-preview-space-btn ${activePreviewSpace === space ? 'active' : ''}`}
-                      onClick={() => setActivePreviewSpace(space)}
+            {/* Archetype Selector */}
+            <div className="lor-archetype-section">
+              <label className="lor-input-label">How do you primarily explore the web?</label>
+              <div className="lor-archetype-grid">
+                {(Object.keys(ARCHETYPE_CONFIG) as Archetype[]).map((key) => {
+                  const item = ARCHETYPE_CONFIG[key];
+                  const Icon = item.icon;
+                  const isSelected = archetype === key;
+                  return (
+                    <div
+                      key={key}
+                      className={`lor-archetype-card ${isSelected ? 'is-selected' : ''}`}
+                      onClick={() => setArchetype(key)}
                     >
-                      <span className="lor-preview-dot" />
-                      <span>{space}</span>
-                    </button>
-                  ))}
+                      <div className="archetype-icon-box">
+                        <Icon size={18} />
+                      </div>
+                      <div className="archetype-content">
+                        <div className="archetype-title">
+                          <span>{item.label}</span>
+                          {isSelected && <Check size={14} className="archetype-check" />}
+                        </div>
+                        <p className="archetype-desc">{item.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            SLIDE 1: DAILY RHYTHMS & TAB ANXIETY
+           ========================================================================= */}
+        {slideIndex === 1 && (
+          <div className="lor-slide-content interactive-stage">
+            <span className="lor-slide-tag">CHAPTER II • RHYTHMS & MEMORY</span>
+            <h1 className="lor-slide-headline">The Amnesiac Slate, Cured.</h1>
+            <p className="lor-slide-subhead">
+              Modern browsers start from scratch every session, forcing you to reconstruct workflows and hoard 1,000 tabs out of fear.
+            </p>
+
+            <div className="lor-interactive-two-col">
+              {/* Rhythm Selector */}
+              <div className="lor-question-card">
+                <label className="lor-input-label">When does your focus naturally peak?</label>
+                <div className="lor-choice-list">
+                  <div 
+                    className={`lor-choice-item ${rhythm === 'morning' ? 'is-selected' : ''}`}
+                    onClick={() => setRhythm('morning')}
+                  >
+                    <div className="choice-icon"><Sun size={16} /></div>
+                    <div className="choice-info">
+                      <strong>Morning Horizon (7:00 – 11:00 AM)</strong>
+                      <span>Early momentum, reading feeds, daily planning.</span>
+                    </div>
+                  </div>
+
+                  <div 
+                    className={`lor-choice-item ${rhythm === 'focus' ? 'is-selected' : ''}`}
+                    onClick={() => setRhythm('focus')}
+                  >
+                    <div className="choice-icon"><Zap size={16} /></div>
+                    <div className="choice-info">
+                      <strong>Deep Work Meridian (12:00 – 5:00 PM)</strong>
+                      <span>Sustained programming, drafting, and research.</span>
+                    </div>
+                  </div>
+
+                  <div 
+                    className={`lor-choice-item ${rhythm === 'night' ? 'is-selected' : ''}`}
+                    onClick={() => setRhythm('night')}
+                  >
+                    <div className="choice-icon"><Moon size={16} /></div>
+                    <div className="choice-info">
+                      <strong>Night Watch (9:00 PM – 2:00 AM)</strong>
+                      <span>Quiet nocturnal deep dives and experimental labs.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tab Handling Style */}
+              <div className="lor-question-card">
+                <label className="lor-input-label">How do you handle open tabs?</label>
+                <div className="lor-choice-list">
+                  <div 
+                    className={`lor-choice-item ${tabStyle === 'hoarder' ? 'is-selected' : ''}`}
+                    onClick={() => setTabStyle('hoarder')}
+                  >
+                    <div className="choice-icon"><Snowflake size={16} /></div>
+                    <div className="choice-info">
+                      <strong>Tab Hoarder (Aggressive Freezing)</strong>
+                      <span>
+                        Tabs inactive for &gt; 25m are automatically hibernated to save 80% RAM and stored in your private Tab Vault.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div 
+                    className={`lor-choice-item ${tabStyle === 'minimalist' ? 'is-selected' : ''}`}
+                    onClick={() => setTabStyle('minimalist')}
+                  >
+                    <div className="choice-icon"><Feather size={16} /></div>
+                    <div className="choice-info">
+                      <strong>Curated Minimalist</strong>
+                      <span>Prefers keeping only 3–5 active tabs open per space with instant archive.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            SLIDE 2: SPATIAL ARCHITECTURE & SIDEBAR AUTO-COLLAPSE
+           ========================================================================= */}
+        {slideIndex === 2 && (
+          <div className="lor-slide-content split-stage">
+            <div className="lor-text-column">
+              <span className="lor-slide-tag">CHAPTER III • SPATIAL ARCHITECTURE</span>
+              <h1 className="lor-slide-headline">Architecture for {displayName}.</h1>
+              <p className="lor-slide-subhead">
+                Based on your {ARCHETYPE_CONFIG[archetype].label} workflow, Lor has staged your dedicated spaces.
+              </p>
+
+              <div className="lor-callout-box">
+                <div className="lor-callout-icon">
+                  <PanelLeftClose size={16} />
+                </div>
+                <div className="lor-callout-text">
+                  <strong>⌘B Auto-Collapse Sidebar:</strong>
+                  <span>Press Cmd+B or hover the screen edge to collapse the sidebar off-screen for a 100% full-width immersive canvas.</span>
+                </div>
+              </div>
+
+              <div className="lor-callout-box">
+                <div className="lor-callout-icon">
+                  <JupiterIcon size={16} />
+                </div>
+                <div className="lor-callout-text">
+                  <strong>Two-Finger Glide:</strong>
+                  <span>Swipe horizontally with two fingers in the sidebar or bottom dock to switch spaces instantly.</span>
                 </div>
               </div>
             </div>
@@ -244,48 +389,62 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                     <span className="light" />
                     <span className="light" />
                   </div>
-                  <span className="lor-frame-title">lor://spaces/{activePreviewSpace.toLowerCase()}</span>
+                  <span className="lor-frame-title">lor://spaces/{currentSpaces[activePreviewSpaceIndex].toLowerCase()}</span>
                 </div>
+
                 <div className="lor-frame-body space-view">
-                  <div className="lor-mock-sidebar">
-                    <div className="mock-space-badge">
-                      <JupiterIcon size={13} />
-                      <span>{activePreviewSpace} Space</span>
-                    </div>
-
-                    <div className="mock-tab-group">
-                      <span className="mock-label">PINNED</span>
-                      <div className="mock-tab-row active">
-                        <span className="mock-fav">🔍</span>
-                        <span>Google Search</span>
-                      </div>
-                      <div className="mock-tab-row">
-                        <span className="mock-fav">🐙</span>
-                        <span>GitHub Dashboard</span>
-                      </div>
-                    </div>
-
-                    <div className="mock-tab-group">
-                      <span className="mock-label">TODAY</span>
-                      <div className="mock-tab-row">
-                        <span className="mock-fav">📜</span>
-                        <span>Library of Alexandria Lore</span>
-                      </div>
-                      <div className="mock-tab-row">
-                        <span className="mock-fav">🪐</span>
-                        <span>Orbital Mechanics</span>
-                      </div>
-                    </div>
+                  {/* Space Selector Tabs */}
+                  <div className="lor-space-preview-pills">
+                    {currentSpaces.map((name, idx) => (
+                      <button
+                        key={name}
+                        className={`space-pill-tab ${idx === activePreviewSpaceIndex ? 'active' : ''}`}
+                        onClick={() => setActivePreviewSpaceIndex(idx)}
+                      >
+                        <JupiterIcon size={12} />
+                        <span>{name}</span>
+                      </button>
+                    ))}
                   </div>
 
-                  <div className="lor-mock-content">
-                    <div className="mock-canvas-card">
-                      <div className="mock-canvas-header">
-                        <span className="mock-canvas-tag">Focused Viewport</span>
-                        <h3>{activePreviewSpace} Environment</h3>
-                      </div>
-                      <p>Full 100% canvas viewport. The liquid sidebar auto-collapses to let you immerse in pure content.</p>
-                    </div>
+                  {/* Mock Sidebar Tabs for Active Space */}
+                  <div className="lor-mock-tabs-list">
+                    {activePreviewSpaceIndex === 0 && (
+                      <>
+                        <div className="mock-tab-item active">
+                          <span className="tab-dot" />
+                          <span>Google Search & Daily Feeds</span>
+                        </div>
+                        <div className="mock-tab-item">
+                          <span className="tab-dot" />
+                          <span>Hacker News & Community Lore</span>
+                        </div>
+                      </>
+                    )}
+                    {activePreviewSpaceIndex === 1 && (
+                      <>
+                        <div className="mock-tab-item active">
+                          <span className="tab-dot" />
+                          <span>{currentSpaces[1]} • Production Repositories</span>
+                        </div>
+                        <div className="mock-tab-item">
+                          <span className="tab-dot" />
+                          <span>Linear & System Architectures</span>
+                        </div>
+                      </>
+                    )}
+                    {activePreviewSpaceIndex === 2 && (
+                      <>
+                        <div className="mock-tab-item active">
+                          <span className="tab-dot" />
+                          <span>{currentSpaces[2]} • ArXiv & Deep Reading</span>
+                        </div>
+                        <div className="mock-tab-item">
+                          <span className="tab-dot" />
+                          <span>Knowledge Obsidian Notes</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -293,22 +452,48 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </div>
         )}
 
-        {/* Slide 2: Dual Split View */}
-        {safeIndex === 2 && (
+        {/* =========================================================================
+            SLIDE 3: SOVEREIGN TAB VAULT & KEYSTROKE MASTERY
+           ========================================================================= */}
+        {slideIndex === 3 && (
           <div className="lor-slide-content split-stage">
             <div className="lor-text-column">
-              <span className="lor-slide-tag">{currentSlide.tag}</span>
-              <h1 className="lor-slide-headline">{currentSlide.headline}</h1>
-              <p className="lor-slide-subhead">{currentSlide.subhead}</p>
-              <p className="lor-slide-story">{currentSlide.story}</p>
+              <span className="lor-slide-tag">CHAPTER IV • ESSENTIAL KEYSTROKES</span>
+              <h1 className="lor-slide-headline">Continuous Keystroke Flow.</h1>
+              <p className="lor-slide-subhead">
+                Master Lor without touching a trackpad. Designed for instant muscle memory.
+              </p>
 
-              <div className="lor-callout-box">
-                <div className="lor-callout-icon">
-                  <Columns2 size={16} />
+              {/* Master Shortcuts Table */}
+              <div className="lor-shortcuts-showcase-grid">
+                <div className="lor-shortcut-chip highlight">
+                  <span className="shortcut-name">Tab Vault (Neural Memory)</span>
+                  <div className="shortcut-keys"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>V</kbd></div>
                 </div>
-                <div className="lor-callout-text">
-                  <strong>Cmd + S Shortcut:</strong>
-                  <span>Instantly split the active tab with any other open tab or start a fresh query side-by-side.</span>
+
+                <div className="lor-shortcut-chip">
+                  <span className="shortcut-name">Auto-Collapse Sidebar</span>
+                  <div className="shortcut-keys"><kbd>⌘</kbd><kbd>B</kbd></div>
+                </div>
+
+                <div className="lor-shortcut-chip">
+                  <span className="shortcut-name">Split View Dual Viewport</span>
+                  <div className="shortcut-keys"><kbd>⌘</kbd><kbd>S</kbd></div>
+                </div>
+
+                <div className="lor-shortcut-chip">
+                  <span className="shortcut-name">Focus Omnibox / Search</span>
+                  <div className="shortcut-keys"><kbd>⌘</kbd><kbd>L</kbd></div>
+                </div>
+
+                <div className="lor-shortcut-chip">
+                  <span className="shortcut-name">History Archive (Lor + Chrome)</span>
+                  <div className="shortcut-keys"><kbd>⌘</kbd><kbd>Y</kbd></div>
+                </div>
+
+                <div className="lor-shortcut-chip">
+                  <span className="shortcut-name">New Tab / Command Bar</span>
+                  <div className="shortcut-keys"><kbd>⌘</kbd><kbd>T</kbd></div>
                 </div>
               </div>
             </div>
@@ -321,109 +506,56 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                     <span className="light" />
                     <span className="light" />
                   </div>
-                  <span className="lor-frame-title">dual: docs.lor.dev ↔ linear.app</span>
+                  <span className="lor-frame-title">lor://vault/neural-search</span>
                 </div>
 
-                <div className="lor-frame-body split-view">
-                  <div className="lor-split-half left">
-                    <div className="lor-split-topbar">
-                      <span>Pane 1 • Research Reference</span>
-                    </div>
-                    <div className="lor-code-preview">
-                      <p className="code-comment">// Fluid trackpad navigation</p>
-                      <p><span className="keyword">const</span> session = <span className="value">new LorSpace()</span>;</p>
-                      <p>session.<span className="fn">split</span>({'{'} sync: <span className="value">true</span> {'}'});</p>
+                <div className="lor-frame-body vault-sim-view">
+                  <div className="vault-sim-header">
+                    <div className="vault-sim-badge">
+                      <Cpu size={12} />
+                      <span>Apple Neural Engine • 0 MB Bloat</span>
                     </div>
                   </div>
 
-                  <div className="lor-split-divider-line">
-                    <div className="lor-split-grip" />
-                  </div>
-
-                  <div className="lor-split-half right">
-                    <div className="lor-split-topbar">
-                      <span>Pane 2 • Live Workspace</span>
-                    </div>
-                    <div className="lor-task-preview">
-                      <div className="task-row done">
-                        <Check size={12} />
-                        <span>Lock-free Chrome History Sync</span>
-                      </div>
-                      <div className="task-row done">
-                        <Check size={12} />
-                        <span>Bespoke Monochrome Onboarding</span>
-                      </div>
-                      <div className="task-row active">
-                        <span className="task-dot" />
-                        <span>1:1 Page Swipe Physics</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Slide 3: Google Chrome History Sync */}
-        {safeIndex === 3 && (
-          <div className="lor-slide-content split-stage">
-            <div className="lor-text-column">
-              <span className="lor-slide-tag">{currentSlide.tag}</span>
-              <h1 className="lor-slide-headline">{currentSlide.headline}</h1>
-              <p className="lor-slide-subhead">{currentSlide.subhead}</p>
-              <p className="lor-slide-story">{currentSlide.story}</p>
-
-              <div className="lor-callout-box">
-                <div className="lor-callout-icon">
-                  <History size={16} />
-                </div>
-                <div className="lor-callout-text">
-                  <strong>Cmd + Y Archive:</strong>
-                  <span>Toggle between your Google Chrome database and Lor Spaces with a single click.</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="lor-visual-column">
-              <div className="lor-showcase-frame">
-                <div className="lor-frame-bar">
-                  <div className="lor-frame-lights">
-                    <span className="light" />
-                    <span className="light" />
-                    <span className="light" />
-                  </div>
-                  <span className="lor-frame-title">lor://history/chrome</span>
-                </div>
-
-                <div className="lor-frame-body history-view">
-                  <div className="lor-omnibox-mock">
+                  {/* Interactive Search Simulator */}
+                  <div className="vault-sim-search">
                     <Search size={14} className="search-icon" />
-                    <span className="omnibox-text">quantum computing research</span>
-                    <span className="omnibox-cursor">|</span>
+                    <input 
+                      type="text"
+                      className="vault-sim-input"
+                      placeholder="Try searching: 'alignment paper' or 'recipe'..."
+                      value={testVaultQuery}
+                      onChange={(e) => setTestVaultQuery(e.target.value)}
+                    />
                   </div>
 
-                  <div className="lor-history-items-mock">
-                    <div className="mock-history-row active">
-                      <Search size={12} />
-                      <span className="mock-hist-title">quantum computing architecture</span>
-                      <span className="mock-hist-badge">Google Suggest</span>
-                    </div>
-                    <div className="mock-history-row">
-                      <History size={12} />
-                      <span className="mock-hist-title">MIT Technology Review — Quantum Supremacy</span>
-                      <span className="mock-hist-badge chrome">Chrome History</span>
-                    </div>
-                    <div className="mock-history-row">
-                      <History size={12} />
-                      <span className="mock-hist-title">ArXiv: Superconducting Qubits & Telemetry</span>
-                      <span className="mock-hist-badge chrome">Chrome History</span>
-                    </div>
-                  </div>
-
-                  <div className="mock-segment-pill">
-                    <span className="segment-active">Google Chrome</span>
-                    <span>Lor Spaces</span>
+                  <div className="vault-sim-results">
+                    {testVaultQuery.toLowerCase().includes('align') || testVaultQuery.toLowerCase().includes('paper') ? (
+                      <div className="vault-sim-card match">
+                        <div className="sim-card-top">
+                          <strong>Direct Preference Optimization (ArXiv:2305)</strong>
+                          <span className="score-pill">98% Semantic Match</span>
+                        </div>
+                        <p className="sim-card-snippet">"Language model alignment without reinforcement learning..."</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="vault-sim-card">
+                          <div className="sim-card-top">
+                            <strong>Direct Preference Optimization: Language Models</strong>
+                            <span className="time-tag">Vaulted 3h ago</span>
+                          </div>
+                          <p className="sim-card-snippet">"We present DPO for training language models without RL..."</p>
+                        </div>
+                        <div className="vault-sim-card">
+                          <div className="sim-card-top">
+                            <strong>Obsidian Liquid Glass Design Tokens</strong>
+                            <span className="time-tag">Vaulted yesterday</span>
+                          </div>
+                          <p className="sim-card-snippet">"Monochrome palette: pure black #000000 with frosted blur..."</p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -431,8 +563,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </div>
         )}
 
-        {/* Slide 4: Epilogue — Crafted by Tyler Tan */}
-        {safeIndex === 4 && (
+        {/* =========================================================================
+            SLIDE 4: EPILOGUE • ARTISANAL CRAFT BY TYLER TAN
+           ========================================================================= */}
+        {slideIndex === 4 && (
           <div className="lor-slide-content epilogue-stage">
             <div className="lor-creator-card">
               <div className="lor-creator-badge-top">
@@ -486,7 +620,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             className={`lor-btn primary ${isLast ? 'launch' : ''}`}
             onClick={handleNext}
           >
-            <span>{isLast ? 'Launch Lor' : 'Continue'}</span>
+            <span>{isLast ? `Launch Lor as ${displayName}` : 'Continue'}</span>
             {isLast ? <Check size={14} /> : <ArrowRight size={14} />}
           </button>
         </div>

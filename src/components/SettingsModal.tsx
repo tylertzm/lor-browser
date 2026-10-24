@@ -18,11 +18,14 @@ import {
   Lock,
   Layers,
   ArrowRight,
-  Monitor
+  Monitor,
+  CheckCircle2,
+  HardDrive
 } from 'lucide-react';
 import { LOR_LOGO } from '../assets/logoBase64';
+import { MODEL_TIERS, ModelTierOption } from './LorCoreAssistant';
 
-export type SettingsTabId = 'appearance' | 'history' | 'shortcuts' | 'about';
+export type SettingsTabId = 'appearance' | 'history' | 'shortcuts' | 'intelligence' | 'about';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -37,6 +40,8 @@ interface SettingsModalProps {
   onClearHistory: () => void;
   onOpenFullHistory: () => void;
   onReplayOnboarding: () => void;
+  lorAssistantEnabled?: boolean;
+  onToggleLorAssistant?: (enabled: boolean) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -51,11 +56,65 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   historyCount,
   onClearHistory,
   onOpenFullHistory,
-  onReplayOnboarding
+  onReplayOnboarding,
+  lorAssistantEnabled = true,
+  onToggleLorAssistant
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTabId>(initialTab);
   const [clearingHistory, setClearingHistory] = useState(false);
   const [historyClearedNotice, setHistoryClearedNotice] = useState(false);
+  const [systemSpecs, setSystemSpecs] = useState<{ totalRamGb: number; cpuModel: string; freeRamGb: number } | null>(null);
+  const [activeModelId, setActiveModelId] = useState<string>(() => localStorage.getItem('lor_active_model_id') || 'moondream');
+
+  // Lor Capabilities Toggles
+  const [assistantEnabled, setAssistantEnabled] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('lor_assistant_enabled');
+      return saved !== null ? saved === 'true' : lorAssistantEnabled;
+    } catch {
+      return lorAssistantEnabled;
+    }
+  });
+
+  const [ambientComments, setAmbientComments] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('lor_ambient_comments');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const [multimodalVision, setMultimodalVision] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('lor_vision_enabled');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const [autoSleep, setAutoSleep] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('lor_auto_idle_enabled');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  // Sync state if prop changes
+  React.useEffect(() => {
+    setAssistantEnabled(lorAssistantEnabled);
+  }, [lorAssistantEnabled]);
+
+  React.useEffect(() => {
+    // @ts-ignore
+    if (window.electronAPI?.getSystemSpecs) {
+      // @ts-ignore
+      window.electronAPI.getSystemSpecs().then((s: any) => setSystemSpecs(s)).catch(() => {});
+    }
+  }, []);
 
   // Sync initial tab when opening modal
   React.useEffect(() => {
@@ -127,6 +186,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             >
               <Command size={15} />
               <span>Shortcuts</span>
+            </button>
+
+            <button
+              className={`settings-nav-item ${activeTab === 'intelligence' ? 'active' : ''}`}
+              onClick={() => setActiveTab('intelligence')}
+            >
+              <Cpu size={15} />
+              <span>Intelligence & Models</span>
             </button>
 
             <button
@@ -204,10 +271,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <p className="settings-subtext">Used when typing non-URL queries into the Omnibox or address pill.</p>
                   <div className="settings-search-options">
                     {[
-                      { id: 'google', name: 'Google Search', icon: '🔍', desc: 'Default engine with live Google Suggest' },
-                      { id: 'duckduckgo', name: 'DuckDuckGo', icon: '🦆', desc: 'Privacy-first search' },
-                      { id: 'ecosia', name: 'Ecosia', icon: '🌱', desc: 'Plant trees with searches' },
-                      { id: 'bing', name: 'Microsoft Bing', icon: '⚡', desc: 'Bing web index' }
+                      { id: 'google', name: 'Google Search', icon: <Search size={13} />, desc: 'Default engine with live Google Suggest' },
+                      { id: 'duckduckgo', name: 'DuckDuckGo', icon: <Shield size={13} />, desc: 'Privacy-first search' },
+                      { id: 'ecosia', name: 'Ecosia', icon: <Globe size={13} />, desc: 'Eco-conscious search' },
+                      { id: 'bing', name: 'Microsoft Bing', icon: <Search size={13} />, desc: 'Bing web index' }
                     ].map((engine) => (
                       <div 
                         key={engine.id}
@@ -441,6 +508,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <h4 className="shortcuts-category-title">Spatial & Multitasking</h4>
                   <div className="shortcuts-table">
                     <div className="shortcut-row">
+                      <span className="shortcut-desc">Toggle Sidebar Auto-Collapse</span>
+                      <div className="keycap-group"><kbd>⌘</kbd><kbd>B</kbd></div>
+                    </div>
+                    <div className="shortcut-row">
                       <span className="shortcut-desc">Split Screen (Dual Viewport)</span>
                       <div className="keycap-group"><kbd>⌘</kbd><kbd>S</kbd></div>
                     </div>
@@ -454,8 +525,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                   </div>
 
-                  <h4 className="shortcuts-category-title">System & Tools</h4>
+                  <h4 className="shortcuts-category-title">Memory & System Tools</h4>
                   <div className="shortcuts-table">
+                    <div className="shortcut-row">
+                      <span className="shortcut-desc">Lor Core (On-Screen Omnipotent Assistant)</span>
+                      <div className="keycap-group"><kbd>⌘</kbd><kbd>I</kbd></div>
+                    </div>
+                    <div className="shortcut-row">
+                      <span className="shortcut-desc">Tab Vault (Semantic Neural Search & Hibernation)</span>
+                      <div className="keycap-group"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>V</kbd></div>
+                    </div>
                     <div className="shortcut-row">
                       <span className="shortcut-desc">Settings & Preferences</span>
                       <div className="keycap-group"><kbd>⌘</kbd><kbd>,</kbd></div>
@@ -477,7 +556,161 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             )}
 
-            {/* 4. ABOUT LOR (TYLER TAN CREATOR SPOTLIGHT) */}
+            {/* 4. INTELLIGENCE & MODELS SYSTEM REQUIREMENTS */}
+            {activeTab === 'intelligence' && (
+              <div className="settings-pane">
+                <div className="settings-pane-header">
+                  <h3>On-Device Intelligence & Model Tiers</h3>
+                  <p>Inspect system hardware specifications and configure the local or cloud model powering Lor Core.</p>
+                </div>
+
+                {/* Lor Capabilities & Autonomous Controls */}
+                <div className="settings-section">
+                  <label className="settings-section-label">Lor Assistant Capabilities</label>
+                  <p className="settings-subtext">Toggle autonomous agent features, vision inspection, and power states to keep your Mac cool.</p>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
+                    {/* Master Switch */}
+                    <div 
+                      className="lor-settings-toggle-row"
+                      onClick={() => {
+                        const next = !assistantEnabled;
+                        setAssistantEnabled(next);
+                        try { localStorage.setItem('lor_assistant_enabled', String(next)); } catch {}
+                        onToggleLorAssistant?.(next);
+                      }}
+                    >
+                      <div className="lor-settings-toggle-info">
+                        <span className="lor-settings-toggle-title">Enable Lor Core Assistant</span>
+                        <span className="lor-settings-toggle-desc">Master switch for the on-screen assistant, floating celestial logo, and AI drawer.</span>
+                      </div>
+                      <div className={`lor-switch ${assistantEnabled ? 'active' : ''}`}>
+                        <div className="lor-switch-thumb" />
+                      </div>
+                    </div>
+
+                    {/* Ambient Commentary */}
+                    <div 
+                      className="lor-settings-toggle-row"
+                      onClick={() => {
+                        const next = !ambientComments;
+                        setAmbientComments(next);
+                        try { localStorage.setItem('lor_ambient_comments', String(next)); } catch {}
+                      }}
+                      style={{ opacity: assistantEnabled ? 1 : 0.4, pointerEvents: assistantEnabled ? 'auto' : 'none' }}
+                    >
+                      <div className="lor-settings-toggle-info">
+                        <span className="lor-settings-toggle-title">Ambient Page Commentary</span>
+                        <span className="lor-settings-toggle-desc">Shares a single brief observation when landing on a new page. Disables all unprompted remarks when off.</span>
+                      </div>
+                      <div className={`lor-switch ${ambientComments && assistantEnabled ? 'active' : ''}`}>
+                        <div className="lor-switch-thumb" />
+                      </div>
+                    </div>
+
+                    {/* Multimodal Screen Vision */}
+                    <div 
+                      className="lor-settings-toggle-row"
+                      onClick={() => {
+                        const next = !multimodalVision;
+                        setMultimodalVision(next);
+                        try { localStorage.setItem('lor_vision_enabled', String(next)); } catch {}
+                      }}
+                      style={{ opacity: assistantEnabled ? 1 : 0.4, pointerEvents: assistantEnabled ? 'auto' : 'none' }}
+                    >
+                      <div className="lor-settings-toggle-info">
+                        <span className="lor-settings-toggle-title">Multimodal Screen Vision</span>
+                        <span className="lor-settings-toggle-desc">Captures downscaled 380px visual snapshots for vision models like Moondream. Turn off to run purely in text mode without any screen capture.</span>
+                      </div>
+                      <div className={`lor-switch ${multimodalVision && assistantEnabled ? 'active' : ''}`}>
+                        <div className="lor-switch-thumb" />
+                      </div>
+                    </div>
+
+                    {/* Auto-Sleep / 2-Min Inactivity */}
+                    <div 
+                      className="lor-settings-toggle-row"
+                      onClick={() => {
+                        const next = !autoSleep;
+                        setAutoSleep(next);
+                        try { localStorage.setItem('lor_auto_idle_enabled', String(next)); } catch {}
+                      }}
+                      style={{ opacity: assistantEnabled ? 1 : 0.4, pointerEvents: assistantEnabled ? 'auto' : 'none' }}
+                    >
+                      <div className="lor-settings-toggle-info">
+                        <span className="lor-settings-toggle-title">2-Minute Inactivity Auto-Sleep</span>
+                        <span className="lor-settings-toggle-desc">Puts Lor into low-power idle sleep after 2 minutes of silence to preserve battery and keep CPU/GPU usage at zero.</span>
+                      </div>
+                      <div className={`lor-switch ${autoSleep && assistantEnabled ? 'active' : ''}`}>
+                        <div className="lor-switch-thumb" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Host Hardware Detection */}
+                <div className="settings-section">
+                  <label className="settings-section-label">Host Hardware</label>
+                  <div className="history-status-card">
+                    <div className="history-status-top">
+                      <div className="history-status-indicator active">
+                        <Cpu size={16} />
+                        <span className="status-label">{systemSpecs?.cpuModel || 'Apple M3 Pro'}</span>
+                      </div>
+                      <span className="history-badge-sqlite">{systemSpecs?.totalRamGb || '18.0'} GB Unified</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Model Catalog & System Requirements - Strictly Required Info Only */}
+                <div className="settings-section">
+                  <label className="settings-section-label">Model Selection</label>
+                  <div className="lor-model-options-list" style={{ maxHeight: 'none' }}>
+                    {MODEL_TIERS.map((opt) => {
+                      const isSelected = activeModelId === opt.id;
+                      return (
+                        <div
+                          key={opt.id}
+                          className={`lor-model-option-card ${isSelected ? 'is-selected' : ''}`}
+                          onClick={() => {
+                            setActiveModelId(opt.id);
+                            localStorage.setItem('lor_active_model_id', opt.id);
+                          }}
+                        >
+                          <div className="model-card-header">
+                            <div className="model-title-row">
+                              <strong>{opt.name}</strong>
+                              {isSelected && (
+                                <span className="active-pill">
+                                  Active
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="model-reqs-grid">
+                            <div className="req-item">
+                              <span className="req-label">RAM</span>
+                              <span className="req-value">{opt.ram}</span>
+                            </div>
+                            <div className="req-item">
+                              <span className="req-label">Disk</span>
+                              <span className="req-value">{opt.disk}</span>
+                            </div>
+                            <div className="req-item">
+                              <span className="req-label">Engine</span>
+                              <span className="req-value">{opt.acceleration}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 5. ABOUT LOR (TYLER TAN CREATOR SPOTLIGHT) */}
             {activeTab === 'about' && (
               <div className="settings-pane">
                 <div className="about-tab-hero">

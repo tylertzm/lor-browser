@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Archive, Download, Plus, Trash2, Edit2, Check, X, Info, Settings } from 'lucide-react';
+import { Archive, Download, Plus, Trash2, Edit2, Check, X, Info, Settings, Snowflake } from 'lucide-react';
 import { Space, DownloadItem } from '../types/browser';
 
 // Modern 2026 Jupiter Planetary Icon (Celestial core with tilted ring system)
@@ -29,6 +29,7 @@ interface SpaceSwitcherProps {
   onRenameSpace: (spaceId: string, newName: string) => void;
   onDeleteSpace: (spaceId: string) => void;
   onOpenArchive: () => void;
+  onOpenVault?: () => void;
   onOpenDownloads?: () => void;
   onOpenAbout?: () => void;
   onOpenSettings?: (tab?: 'appearance' | 'history' | 'shortcuts' | 'about') => void;
@@ -46,6 +47,7 @@ export const SpaceSwitcher: React.FC<SpaceSwitcherProps> = ({
   onRenameSpace,
   onDeleteSpace,
   onOpenArchive,
+  onOpenVault,
   onOpenDownloads,
   onOpenAbout,
   onOpenSettings,
@@ -203,6 +205,15 @@ export const SpaceSwitcher: React.FC<SpaceSwitcherProps> = ({
             title="History (Cmd+Y)"
           >
             <Archive size={15} />
+          </button>
+        )}
+        {!isPrivate && onOpenVault && (
+          <button 
+            className="icon-btn" 
+            onClick={onOpenVault} 
+            title="Tab Vault (Cmd+Shift+V)"
+          >
+            <Snowflake size={15} />
           </button>
         )}
         {onOpenDownloads && (

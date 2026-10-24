@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Pin, PinOff, Columns2 } from 'lucide-react';
+import { X, Pin, PinOff, Columns2, Snowflake } from 'lucide-react';
 import { Tab } from '../types/browser';
 
 interface TabItemProps {
@@ -118,6 +118,12 @@ export const TabItem: React.FC<TabItemProps> = ({
       </div>
 
       <span className="tab-label">{tab.title || 'Untitled'}</span>
+
+      {tab.isFrozen && (
+        <span className="tab-frozen-badge" title="Hibernated: RAM freed. Click to awaken.">
+          <Snowflake size={11} />
+        </span>
+      )}
 
       <div className="tab-actions">
         {onSplitScreen && (

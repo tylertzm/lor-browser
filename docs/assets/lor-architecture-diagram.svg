@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 760" width="100%" height="100%" style="background:#ffffff; font-family:'Virgil', 'Caveat', 'Comic Sans MS', cursive, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#111111" />
+    </marker>
+    <filter id="sketchy" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+  </defs>
+
+  <style>
+    .title { font-size: 26px; font-weight: bold; fill: #111111; }
+    .box-title { font-size: 15px; font-weight: bold; fill: #111111; }
+    .sub-title { font-size: 13px; font-weight: 600; fill: #222222; }
+    .label { font-size: 12px; fill: #444444; }
+    .arrow-label { font-size: 11px; fill: #222222; font-style: italic; }
+    .outer-rect { fill: #ffffff; stroke: #18181b; stroke-width: 2.2; rx: 16; filter: url(#sketchy); }
+    .inner-rect { fill: #fafafa; stroke: #27272a; stroke-width: 1.8; rx: 12; filter: url(#sketchy); }
+    .card-rect { fill: #ffffff; stroke: #3f3f46; stroke-width: 1.5; rx: 8; filter: url(#sketchy); }
+    .edge { stroke: #18181b; stroke-width: 1.8; fill: none; stroke-linecap: round; }
+  </style>
+
+  <!-- Document Header -->
+  <text x="40" y="46" class="title">Lor Browser Ecosystem Architecture</text>
+
+  <!-- LEFT COLUMN: Security & Observability -->
+  <!-- Container: Security & Sandboxing -->
+  <rect x="36" y="80" width="250" height="180" class="outer-rect" />
+  <text x="54" y="108" class="box-title">Security &amp; Sandboxing</text>
+  <rect x="50" y="124" width="220" height="52" class="card-rect" />
+  <text x="66" y="146" class="sub-title">Context Isolation &amp; Stealth</text>
+  <text x="66" y="164" class="label">Anti-Bot Fingerprint Emulator</text>
+  <rect x="50" y="188" width="220" height="52" class="card-rect" />
+  <text x="66" y="210" class="sub-title">Sandboxed IPC Barrier</text>
+  <text x="66" y="228" class="label">Strict Channel Validation</text>
+
+  <!-- Container: Observability & Persistence -->
+  <rect x="36" y="285" width="250" height="225" class="outer-rect" />
+  <text x="54" y="313" class="box-title">Observability &amp; Storage</text>
+  <rect x="50" y="330" width="220" height="52" class="card-rect" />
+  <text x="66" y="352" class="sub-title">Tab Vault &amp; History</text>
+  <text x="66" y="370" class="label">SQLite &amp; Inactive Tab Stash</text>
+  <rect x="50" y="394" width="220" height="52" class="card-rect" />
+  <text x="66" y="416" class="sub-title">LorFlow 24h Snapshots</text>
+  <text x="66" y="434" class="label">Rolling Version Rollback</text>
+  <rect x="50" y="458" width="220" height="40" class="card-rect" />
+  <text x="66" y="482" class="sub-title">Zero Telemetry Guarantee</text>
+
+  <!-- CENTER: Main Host Container (Dual Engine + LorFlow + AI Assistant) -->
+  <rect x="315" y="80" width="620" height="430" class="outer-rect" />
+  <text x="335" y="110" class="box-title">Lor Desktop Application Host (macOS AppKit &amp; Electron 33 Dual Engine)</text>
+
+  <!-- Sub-Component: Obsidian Liquid Glass Canvas -->
+  <rect x="335" y="130" width="275" height="165" class="inner-rect" />
+  <text x="350" y="156" class="box-title">Liquid Glass Canvas</text>
+  <rect x="348" y="170" width="250" height="38" class="card-rect" />
+  <text x="360" y="194" class="label">Collapsible 15% Edge Peek Sidebar</text>
+  <rect x="348" y="214" width="250" height="38" class="card-rect" />
+  <text x="360" y="238" class="label">Spaces Manager &amp; Tab Strips</text>
+  <rect x="348" y="258" width="250" height="30" class="card-rect" />
+  <text x="360" y="278" class="label">Obsidian Liquid Glass Omnibox</text>
+
+  <!-- Sub-Component: LorFlow Studio Engine -->
+  <rect x="635" y="130" width="280" height="165" class="inner-rect" />
+  <text x="650" y="156" class="box-title">LorFlow Autonomous Studio</text>
+  <rect x="648" y="170" width="254" height="38" class="card-rect" />
+  <text x="660" y="194" class="label">Directed Node Graph Engine</text>
+  <rect x="648" y="214" width="254" height="38" class="card-rect" />
+  <text x="660" y="238" class="label">Internal LorFlow MCP Tool Bridge</text>
+  <rect x="648" y="258" width="254" height="30" class="card-rect" />
+  <text x="660" y="278" class="label">Autonomous Reiteration Loop</text>
+
+  <!-- Sub-Component: Lor Core AI Assistant -->
+  <rect x="335" y="325" width="580" height="165" class="inner-rect" />
+  <text x="350" y="352" class="box-title">Lor Core AI Assistant (Right Co-Pilot)</text>
+  
+  <rect x="350" y="370" width="170" height="105" class="card-rect" />
+  <text x="360" y="396" class="sub-title">Multi-Tier LLMs</text>
+  <text x="360" y="422" class="label">Gemini Pro / Flash</text>
+  <text x="360" y="444" class="label">Autonomous Planner</text>
+
+  <rect x="540" y="370" width="180" height="105" class="card-rect" />
+  <text x="550" y="396" class="sub-title">Fix with Lor in Chat</text>
+  <text x="550" y="422" class="label">Root-Cause Analysis</text>
+  <text x="550" y="444" class="label">Direct Node Repair</text>
+
+  <rect x="740" y="370" width="160" height="105" class="card-rect" />
+  <text x="750" y="396" class="sub-title">Vibe Coding</text>
+  <text x="750" y="422" class="label">Natural Language</text>
+  <text x="750" y="444" class="label">Canvas Wiring MCP</text>
+
+  <!-- RIGHT COLUMN: Users & Actors -->
+  <rect x="970" y="110" width="270" height="105" class="card-rect" />
+  <text x="985" y="140" class="box-title">User / Developer</text>
+  <text x="985" y="164" class="label">Obsidian Immersion Browsing</text>
+  <text x="985" y="186" class="label">Natural Language Vibe Coding</text>
+
+  <rect x="970" y="270" width="270" height="105" class="card-rect" />
+  <text x="985" y="300" class="box-title">Autonomous Agent Worker</text>
+  <text x="985" y="324" class="label">Executes Node Graph Steps</text>
+  <text x="985" y="346" class="label">Multi-Turn Self-Correction Loop</text>
+
+  <!-- BOTTOM CLOUD INTEGRATIONS -->
+  <!-- Google Workspace Suite -->
+  <rect x="315" y="550" width="345" height="180" class="outer-rect" />
+  <text x="335" y="578" class="box-title">Google Workspace Cloud</text>
+  <rect x="330" y="595" width="315" height="56" class="card-rect" />
+  <text x="345" y="618" class="sub-title">Google Docs Engine</text>
+  <text x="345" y="638" class="label">Live Structured Research Insertion &amp; Formatting</text>
+  <rect x="330" y="660" width="315" height="56" class="card-rect" />
+  <text x="345" y="683" class="sub-title">Google Drive Integration</text>
+  <text x="345" y="703" class="label">Document Link Cache &amp; Secure Session Access</text>
+
+  <!-- Web Intelligence & Automation -->
+  <rect x="690" y="550" width="345" height="180" class="outer-rect" />
+  <text x="710" y="578" class="box-title">Web Intelligence &amp; Scraping</text>
+  <rect x="705" y="595" width="315" height="56" class="card-rect" />
+  <text x="720" y="618" class="sub-title">Playwright Automation Core</text>
+  <text x="720" y="638" class="label">Headless Session Runner &amp; Anti-Bot Evasion</text>
+  <rect x="705" y="660" width="315" height="56" class="card-rect" />
+  <text x="720" y="683" class="sub-title">Multi-Engine Search Indices</text>
+  <text x="720" y="703" class="label">Google, DuckDuckGo &amp; Ecosia Real-Time Fetch</text>
+
+  <!-- ARROWS & FLOWS -->
+  <!-- User to Canvas -->
+  <path d="M 970 160 L 610 160" class="edge" marker-end="url(#arrow)" />
+  <text x="740" y="152" class="arrow-label">Interacts / Browses</text>
+
+  <!-- User to AI Assistant -->
+  <path d="M 970 195 C 930 230 910 320 870 370" class="edge" marker-end="url(#arrow)" />
+  <text x="890" y="290" class="arrow-label">Vibe Codes</text>
+
+  <!-- Canvas to LorFlow -->
+  <path d="M 480 295 C 480 310 650 310 650 295" class="edge" marker-end="url(#arrow)" />
+  <text x="535" y="318" class="arrow-label">Launches via 2% Crescent</text>
+
+  <!-- LorFlow to AI Assistant (Diagnostics) -->
+  <path d="M 740 295 L 740 325" class="edge" marker-end="url(#arrow)" />
+  <text x="748" y="315" class="arrow-label">Error Context</text>
+
+  <!-- AI Assistant to LorFlow (MCP Auto-Fix / Vibe Code) -->
+  <path d="M 820 325 L 820 295" class="edge" marker-end="url(#arrow)" />
+  <text x="828" y="315" class="arrow-label">LorFlow MCP Actions</text>
+
+  <!-- Agent Worker to LorFlow -->
+  <path d="M 970 320 L 915 260" class="edge" marker-end="url(#arrow)" />
+  <text x="920" y="275" class="arrow-label">Executes</text>
+
+  <!-- LorFlow to Google Docs Cloud -->
+  <path d="M 500 510 L 500 550" class="edge" marker-end="url(#arrow)" />
+  <text x="508" y="535" class="arrow-label">Live Doc Export &amp; Synthesis</text>
+
+  <!-- LorFlow to Web Intelligence -->
+  <path d="M 780 510 L 780 550" class="edge" marker-end="url(#arrow)" />
+  <text x="788" y="535" class="arrow-label">Web Scrape &amp; Query</text>
+
+  <!-- Observability to LorFlow -->
+  <path d="M 286 420 L 335 420" class="edge" marker-end="url(#arrow)" />
+  <text x="288" y="410" class="arrow-label">24h Snapshots</text>
+</svg>

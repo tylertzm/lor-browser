@@ -9,6 +9,40 @@ export interface Tab {
   canGoForward: boolean;
   spaceId: string;
   splitWithTabId?: string;
+  isFrozen?: boolean;
+  lastActiveAt?: number;
+  isAgentSearchTab?: boolean;
+}
+
+export interface IndexedKnowledgeEntry {
+  id: string;
+  topic: string;
+  category: string;
+  summary: string;
+  tags: string[];
+  sourceUrl?: string;
+  sourceTitle?: string;
+  timestamp: number;
+  filePath?: string;
+}
+
+export interface VaultTabItem {
+  id: string;
+  url: string;
+  title: string;
+  favicon?: string;
+  contentSnippet?: string;
+  spaceName?: string;
+  createdAt: number;
+  lastAccessedAt: number;
+  isPinned: boolean;
+  score?: number;
+}
+
+export interface VaultStats {
+  vaultedCount: number;
+  dbSizeBytes: number;
+  estimatedMbSaved: number;
 }
 
 export interface Space {
@@ -41,4 +75,18 @@ export interface DownloadItem {
   mimeType?: string;
   startTime: number;
   completedTime?: number;
+}
+
+export interface BackgroundWorkflowRequest {
+  id: 'github-prs' | 'instagram-dms' | 'github-notifications' | 'custom';
+  customUrl?: string;
+  query?: string;
+}
+
+export interface BackgroundWorkflowResult {
+  success: boolean;
+  service?: string;
+  loggedIn?: boolean;
+  data?: any;
+  error?: string;
 }

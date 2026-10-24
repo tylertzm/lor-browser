@@ -8,17 +8,17 @@ const stealthCode = `
   // 1. Eradicate navigator.webdriver & Automation Flags
   try {
     const navProto = Object.getPrototypeOf(navigator) || Navigator.prototype;
-    delete (navigator as any).webdriver;
-    delete (navProto as any).webdriver;
+    delete navigator.webdriver;
+    delete navProto.webdriver;
     Object.defineProperty(navProto, 'webdriver', {
       get: () => undefined,
       configurable: true,
       enumerable: false
     });
     // Remove CDP automation markers
-    delete (window as any).cdc_adoQpoasnfa76pfcZLmcfl_Array;
-    delete (window as any).cdc_adoQpoasnfa76pfcZLmcfl_Promise;
-    delete (window as any).cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
+    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
+    delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
   } catch (e) {}
 
   // Google Accounts / Auth Specialized Identity (Bypasses embedded-Chromium BotGuard heuristics)
@@ -44,8 +44,8 @@ const stealthCode = `
         get: () => 'MacIntel',
         configurable: true
       });
-      delete (navProto as any).userAgentData;
-      delete (navigator as any).userAgentData;
+      delete navProto.userAgentData;
+      delete navigator.userAgentData;
     }
   } catch (e) {}
 
@@ -401,8 +401,9 @@ try {
 
   let accumulatedDeltaX = 0;
   let gestureTimer: any = null;
+  let hasTriggeredInGesture = false;
   let currentCursorY = typeof window !== 'undefined' ? window.innerHeight / 2 : 300;
-  const THRESHOLD = 36; // Fast, decisive confirmation threshold
+  const THRESHOLD = 38; // Fast, decisive confirmation threshold
 
   window.addEventListener('mousemove', (e) => {
     currentCursorY = Math.max(60, Math.min(window.innerHeight - 60, e.clientY));
@@ -416,21 +417,26 @@ try {
   }, { passive: true });
 
   window.addEventListener('wheel', (e) => {
+    // If this gesture already triggered a navigation, wait until fingers lift
+    if (hasTriggeredInGesture) {
+      if (gestureTimer) clearTimeout(gestureTimer);
+      gestureTimer = setTimeout(() => {
+        hasTriggeredInGesture = false;
+        accumulatedDeltaX = 0;
+      }, 160);
+      return;
+    }
+
     // Must be predominantly horizontal gesture
-    if (Math.abs(e.deltaX) < 4 || Math.abs(e.deltaY) > Math.abs(e.deltaX) * 0.8) {
+    if (Math.abs(e.deltaX) < 3 || Math.abs(e.deltaY) > Math.abs(e.deltaX) * 0.9) {
       return;
     }
 
-    const isSwipeRight = (accumulatedDeltaX + e.deltaX) < 0 || e.deltaX < 0; // Fingers move right = BACK
-    const isSwipeLeft = (accumulatedDeltaX + e.deltaX) > 0 || e.deltaX > 0;  // Fingers move left = FORWARD
-
-    // Disable if no history available for the requested direction
-    const hasBackHistory = canGoBackState || Boolean(window.history && window.history.length > 1);
-    if (isSwipeRight && !hasBackHistory) {
-      return;
-    }
-    if (isSwipeLeft && !canGoForwardState) {
-      return;
+    // If user is scrolled horizontally within an internal scrollable container, don't hijack scroll
+    const targetEl = e.target as HTMLElement;
+    if (targetEl && targetEl.scrollWidth > targetEl.clientWidth) {
+      if (e.deltaX < 0 && targetEl.scrollLeft > 10) return;
+      if (e.deltaX > 0 && targetEl.scrollLeft < targetEl.scrollWidth - targetEl.clientWidth - 10) return;
     }
 
     accumulatedDeltaX += e.deltaX;
@@ -469,10 +475,12 @@ try {
         el.style.transform = isBack ? 'translate3d(-48px, -50%, 0)' : 'translate3d(48px, -50%, 0)';
       }
       accumulatedDeltaX = 0;
-    }, 120);
+      hasTriggeredInGesture = false;
+    }, 160);
 
     // Confirmation switch: execute immediately once dragged past threshold (NO COOLDOWNS)
     if (dragDist >= THRESHOLD) {
+      hasTriggeredInGesture = true;
       accumulatedDeltaX = 0;
       if (gestureTimer) clearTimeout(gestureTimer);
 

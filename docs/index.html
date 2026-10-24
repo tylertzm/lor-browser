@@ -894,15 +894,17 @@
       <a href="#" class="nav-brand">
         <img src="assets/logo.png" alt="Lor Logo">
         <span class="nav-title">Lor</span>
-        <span class="nav-version-badge">v0.1.0 Beta</span>
+        <span class="nav-version-badge">v0.2.0 Beta</span>
       </a>
 
       <div class="nav-links">
         <a href="#features" class="nav-link">Features</a>
+        <a href="#architecture" class="nav-link">Architecture</a>
+        <a href="blog.html" class="nav-link">Blog</a>
         <a href="#shortcuts" class="nav-link">Shortcuts</a>
         <a href="https://github.com/tylertzm/lor-browser" target="_blank" rel="noopener noreferrer" class="nav-link">GitHub</a>
-        <a href="https://github.com/tylertzm/lor-browser/releases/tag/v0.1.0" target="_blank" rel="noopener noreferrer" class="nav-link">Releases</a>
-        <a href="https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg" class="btn-nav-download" download onclick="trackDownload(event)">
+        <a href="https://github.com/tylertzm/lor-browser/releases" target="_blank" rel="noopener noreferrer" class="nav-link">Releases</a>
+        <a href="https://github.com/tylertzm/lor-browser/releases/download/v0.2.0/Lor-0.2.0-arm64.dmg" class="btn-nav-download" download onclick="trackDownload(event)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
@@ -919,31 +921,32 @@
     <div class="container">
       <div class="hero-badge">
         <span class="pulse"></span>
-        <span>Liquid Glass & Monochrome Desktop Architecture</span>
+        <span>Lor v0.2.0 Beta • Autonomous Liquid Glass &amp; Obsidian Studio</span>
       </div>
 
       <h1 class="hero-title">
-        The minimal macOS browser for focused minds.
+        The autonomous macOS browser for deep focus &amp; AI workflows.
       </h1>
 
       <p class="hero-subtitle">
-        Spaces, vertical tab management, semantic AI tidy, and an unobtrusive 15% hover peek sidebar. Handcrafted in pure black & white.
+        Spaces, vertical tab management, an unobtrusive 15% hover peek, and LorFlow: an embedded visual AI workflow studio with internal MCP vibe-coding. Handcrafted in pure obsidian monochrome.
       </p>
 
       <div class="cta-container">
         <div class="cta-buttons">
-          <a href="https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg" class="btn-primary" id="mac-download-btn" download onclick="trackDownload(event, 'mac')">
+          <a href="https://github.com/tylertzm/lor-browser/releases/download/v0.2.0/Lor-0.2.0-arm64.dmg" class="btn-primary" id="mac-download-btn" download onclick="trackDownload(event, 'mac')">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.57.66-.99 1.72-.88 2.76 1.01.08 2.01-.52 2.59-1.26z"/>
             </svg>
-            <span id="mac-download-text">Download for macOS (.dmg)</span>
+            <span id="mac-download-text">Download Lor for macOS (.dmg)</span>
           </a>
 
-          <a href="https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-Setup-0.1.0.exe" class="btn-secondary" id="win-download-btn" download onclick="trackDownload(event, 'win')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
+          <a href="blog.html" class="btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
             </svg>
-            <span id="win-download-text">Download for Windows (.exe)</span>
+            Read Architecture Blog
           </a>
 
           <a href="https://github.com/tylertzm/lor-browser" target="_blank" rel="noopener noreferrer" class="btn-secondary">
@@ -955,9 +958,9 @@
         </div>
 
         <div class="dmg-meta">
-          <span>macOS Apple Silicon (196 MB) • Windows x64 (81 MB)</span>
+          <span>macOS Apple Silicon M1/M2/M3/M4 (105 MB DMG)</span>
           <span>•</span>
-          <a href="https://github.com/tylertzm/lor-browser/releases/tag/v0.1.0" target="_blank" rel="noopener noreferrer">All Release Assets ↗</a>
+          <a href="https://github.com/tylertzm/lor-browser/releases" target="_blank" rel="noopener noreferrer">All Release Assets ↗</a>
         </div>
       </div>
 
@@ -965,24 +968,29 @@
       <div class="hero-showcase" id="heroCarousel">
         <div class="carousel-frame">
           <div class="carousel-viewport">
-            <!-- Slide 1: Main Workspace -->
-            <div class="carousel-slide active" data-index="0" data-tag="Workspace" data-title="Liquid Monochrome Canvas" data-desc="Isolated spaces, pinned tabs, and inline omnibar navigation.">
+            <!-- Slide 1: LorFlow Autonomous Studio -->
+            <div class="carousel-slide active" data-index="0" data-tag="LorFlow" data-title="LorFlow Autonomous Studio" data-desc="Visual node-graph automation with Google Docs live sync and autonomous convergence.">
+              <img src="assets/lorflow-studio.png" alt="LorFlow Autonomous Studio">
+            </div>
+
+            <!-- Slide 2: Directed Node Canvas -->
+            <div class="carousel-slide" data-index="1" data-tag="Visual Nodes" data-title="Interactive Node Graph" data-desc="Prompt triggers, multi-engine web scrapers, Gemini synthesis, and loops.">
+              <img src="assets/lorflow-canvas.png" alt="LorFlow Directed Node Canvas">
+            </div>
+
+            <!-- Slide 3: Handcrafted Architecture Diagram -->
+            <div class="carousel-slide" data-index="2" data-tag="Architecture" data-title="System Architecture Diagram" data-desc="Dual-engine AppKit & Electron, sandboxed IPC, internal MCP tools, and cloud sync.">
+              <img src="assets/lor-architecture-diagram.svg" alt="Lor Handcrafted Architecture Diagram">
+            </div>
+
+            <!-- Slide 4: Liquid Monochrome Canvas -->
+            <div class="carousel-slide" data-index="3" data-tag="Workspace" data-title="Liquid Monochrome Canvas" data-desc="Isolated spaces, pinned tabs, and 15% screen edge hover peek reveal.">
               <img src="assets/carousel-1-workspace.png" alt="Lor Liquid Monochrome Workspace">
             </div>
 
-            <!-- Slide 2: Bicameral Split View -->
-            <div class="carousel-slide" data-index="1" data-tag="Split View" data-title="Bicameral Multitasking" data-desc="Side-by-side tabs with draggable fluid ratio dividers.">
-              <img src="assets/carousel-2-split.png" alt="Lor Bicameral Split View">
-            </div>
-
-            <!-- Slide 3: Prologue Onboarding -->
-            <div class="carousel-slide" data-index="2" data-tag="Prologue" data-title="The Internet, Reclaimed" data-desc="A distraction-free desktop sanctuary engineered for deep work.">
+            <!-- Slide 5: Prologue & Sanctuary -->
+            <div class="carousel-slide" data-index="4" data-tag="Prologue" data-title="The Internet, Reclaimed" data-desc="A distraction-free desktop sanctuary engineered for deep work.">
               <img src="assets/carousel-3-prologue.png" alt="Lor Prologue & Philosophy">
-            </div>
-
-            <!-- Slide 4: Settings & Sovereignty -->
-            <div class="carousel-slide" data-index="3" data-tag="Preferences" data-title="Full Local Sovereignty" data-desc="Zero telemetry, Chrome SQLite sync, and deep appearance styling.">
-              <img src="assets/carousel-4-settings.png" alt="Lor Settings and Appearance">
             </div>
 
             <!-- Navigation Arrows -->
@@ -1002,10 +1010,10 @@
         <!-- Carousel Bottom Bar: Dynamic Caption + Indicator Dots -->
         <div class="carousel-controls">
           <div class="carousel-caption">
-            <span class="carousel-caption-tag" id="carouselTag">Workspace</span>
+            <span class="carousel-caption-tag" id="carouselTag">LorFlow</span>
             <span class="carousel-caption-text">
-              <strong id="carouselTitle">Liquid Monochrome Canvas</strong> — 
-              <span id="carouselDesc">Isolated spaces, pinned tabs, and inline omnibar navigation.</span>
+              <strong id="carouselTitle">LorFlow Autonomous Studio</strong> — 
+              <span id="carouselDesc">Visual node-graph automation with Google Docs live sync and autonomous convergence.</span>
             </span>
           </div>
 
@@ -1014,6 +1022,7 @@
             <button class="carousel-dot" onclick="goToSlide(1)" aria-label="Slide 2"></button>
             <button class="carousel-dot" onclick="goToSlide(2)" aria-label="Slide 3"></button>
             <button class="carousel-dot" onclick="goToSlide(3)" aria-label="Slide 4"></button>
+            <button class="carousel-dot" onclick="goToSlide(4)" aria-label="Slide 5"></button>
           </div>
         </div>
       </div>
@@ -1039,6 +1048,29 @@
     </div>
   </section>
 
+  <!-- Architecture Showcase Section -->
+  <section class="features-section" id="architecture" style="border-bottom: 1px solid var(--border-subtle);">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-eyebrow">Engineering &amp; Systems</div>
+        <h2 class="section-title">Handcrafted Dual-Core Architecture</h2>
+        <p style="color:var(--text-secondary); max-width:640px; margin: 12px auto 0; font-size: 14.5px;">
+          Hardened Electron 33 host paired with native macOS AppKit / WKWebView, an internal MCP tool bridge, and live Google Docs sync.
+        </p>
+      </div>
+
+      <div style="margin: 32px 0; border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; background: #ffffff; box-shadow: 0 24px 80px rgba(0,0,0,0.8);">
+        <img src="assets/lor-architecture-diagram.svg" alt="Lor Browser Ecosystem Architecture Diagram" style="width: 100%; display: block;">
+      </div>
+
+      <div style="text-align: center; margin-top: 24px;">
+        <a href="blog.html" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px;">
+          <span>Read the Technical Architecture Blog Post ↗</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
   <!-- Features Section -->
   <section class="features-section" id="features">
     <div class="container">
@@ -1049,7 +1081,38 @@
 
       <div class="features-grid">
         <div class="feature-card">
-          <div class="feature-icon">🪐</div>
+          <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg></div>
+          <h3 class="feature-title">LorFlow Studio</h3>
+          <p class="feature-desc">
+            Visual node-graph automation studio inside your browser. Run multi-turn research, synthesize findings with Gemini AI, and live-export directly into formatted Google Docs.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/></svg></div>
+          <h3 class="feature-title">Internal MCP Vibe-Coding</h3>
+          <p class="feature-desc">
+            Build and wire automations in natural language. The AI assistant connects via embedded Model Context Protocol tools to dynamically construct node schemas live.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <h3 class="feature-title">24h Rolling Rollback</h3>
+          <p class="feature-desc">
+            Never lose workflow state. Snapshots are recorded automatically before every edit, allowing instant rollback to any past state up to 24 hours back.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></div>
+          <h3 class="feature-title">Bottom 2% Crescent Trigger</h3>
+          <p class="feature-desc">
+            Zero visual clutter. The solid lunar crescent remains hidden until your cursor touches the bottom 2% of your display, charging on dwell to launch LorFlow.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/></svg></div>
           <h3 class="feature-title">Isolated Spaces</h3>
           <p class="feature-desc">
             Organize personal life, engineering, and research into dedicated workspaces. Swipe horizontally with two fingers to glide between them seamlessly.
@@ -1057,7 +1120,7 @@
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">✨</div>
+          <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg></div>
           <h3 class="feature-title">Semantic Tab Tidy</h3>
           <p class="feature-desc">
             One click categorizes dozens of open tabs into structured clusters: Tech & Dev, Research & Docs, Media, and Communications, with deduplication.
@@ -1065,7 +1128,7 @@
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">👁️</div>
+          <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></div>
           <h3 class="feature-title">15% Screen Peek Reveal</h3>
           <p class="feature-desc">
             Collapse the sidebar with <code>Cmd + S</code> for borderless web immersion. Simply hover your cursor within the left 15% edge to peek your navigation.
@@ -1073,7 +1136,7 @@
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">📌</div>
+          <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></div>
           <h3 class="feature-title">Pinned Tab Hub</h3>
           <p class="feature-desc">
             Pin critical daily dashboards to the top of each space. Your workflow anchors remain persistently visible across tabs.
@@ -1081,7 +1144,7 @@
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">⚡</div>
+          <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
           <h3 class="feature-title">Inline Omnibar</h3>
           <p class="feature-desc">
             Hit <code>Cmd + L</code> to search Google or jump straight to any domain. Copy sanitized, clean URLs with a single click.
@@ -1089,7 +1152,7 @@
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">🛡️</div>
+          <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
           <h3 class="feature-title">Local & Private</h3>
           <p class="feature-desc">
             Zero telemetry, zero cloud surveillance. Your tabs, spaces, and session state are preserved entirely on your local machine.

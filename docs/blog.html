@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Building Lor: The Architecture of an Autonomous Obsidian Browser</title>
+  <meta name="description" content="A comprehensive deep dive into the system architecture, dual-engine runtime, internal MCP vibe-coding, and autonomous visual workflows powering Lor Browser.">
+  <link rel="icon" type="image/png" href="assets/logo.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-primary: #000000;
+      --bg-surface: #0a0a0c;
+      --bg-card: rgba(18, 18, 22, 0.7);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(255, 255, 255, 0.22);
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent-glow: rgba(255, 255, 255, 0.12);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Ambient glow */
+    .ambient-glow {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1000px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Nav Bar */
+    .nav-bar {
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(10, 10, 12, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13.5px;
+      transition: color 0.15s ease;
+    }
+
+    .nav-link:hover { color: var(--text-primary); }
+
+    .nav-cta {
+      background: #ffffff;
+      color: #000000;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 12.5px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.15s ease;
+    }
+
+    .nav-cta:hover { transform: translateY(-1px); }
+
+    /* Post Header */
+    .post-header {
+      padding: 72px 0 40px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .post-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+
+    .post-title {
+      font-size: 40px;
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      color: #ffffff;
+    }
+
+    .post-subtitle {
+      font-size: 18px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .post-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Post Content */
+    .post-content {
+      padding: 48px 0 80px;
+    }
+
+    .post-content h2 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin: 48px 0 18px;
+      color: #ffffff;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 8px;
+    }
+
+    .post-content h3 {
+      font-size: 19px;
+      font-weight: 600;
+      margin: 32px 0 12px;
+      color: #f4f4f5;
+    }
+
+    .post-content p {
+      font-size: 15.5px;
+      color: #d4d4d8;
+      margin-bottom: 20px;
+    }
+
+    .post-content ul, .post-content ol {
+      margin-bottom: 22px;
+      padding-left: 24px;
+      color: #d4d4d8;
+      font-size: 15.5px;
+    }
+
+    .post-content li { margin-bottom: 8px; }
+
+    .post-content strong { color: #ffffff; font-weight: 600; }
+
+    .post-content code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #f4f4f5;
+    }
+
+    .post-content pre {
+      background: #0d0d11;
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin: 24px 0;
+    }
+
+    .post-content pre code {
+      background: transparent;
+      padding: 0;
+      font-size: 12.5px;
+      color: #e4e4e7;
+    }
+
+    .post-figure {
+      margin: 36px 0;
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #09090c;
+    }
+
+    .post-figure img {
+      width: 100%;
+      display: block;
+    }
+
+    .post-figure figcaption {
+      padding: 10px 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      background: rgba(255, 255, 255, 0.02);
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .callout {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 3px solid #ffffff;
+      padding: 18px 22px;
+      border-radius: 0 8px 8px 0;
+      margin: 28px 0;
+    }
+
+    .callout p { margin: 0; color: #e4e4e7; font-size: 14.5px; }
+
+    /* Footer */
+    .site-footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 40px 0;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <!-- Navigation -->
+  <nav class="nav-bar">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-brand">
+        <img src="assets/logo.png" width="28" height="28" alt="Lor Logo">
+        <span>Lor Browser</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="index.html#features" class="nav-link">Features</a>
+        <a href="ARCHITECTURE.md" class="nav-link">Architecture</a>
+        <a href="blog.html" class="nav-link" style="color:#ffffff;">Blog</a>
+        <a href="https://github.com/tylertzm/lor-browser/releases" class="nav-cta">Download v0.2.0</a>
+      </div>
+    </div>
+  </nav>
+
+  <article class="container">
+    <header class="post-header">
+      <div class="post-badge">Engineering Deep Dive</div>
+      <h1 class="post-title">Building Lor: The Architecture of an Autonomous Obsidian Browser</h1>
+      <p class="post-subtitle">How we engineered a dual-core desktop runtime, embedded visual workflow graph (LorFlow), and natural-language MCP vibe coding in pure monochrome obsidian glass.</p>
+      <div class="post-meta">
+        <span>By Tyler Tan</span>
+        <span>•</span>
+        <span>Architecture & Systems Engineering</span>
+        <span>•</span>
+        <span>v0.2.0 Beta Milestone</span>
+      </div>
+    </header>
+
+    <div class="post-content">
+      <p>Modern commercial browsers are no longer user agents. They have turned into ad networks with rendering engines attached: cluttered with telemetry, saturated brand tabs, pop-up notifications, and tabs competing for cognitive attention. When you open a dozen tabs, you are fighting the browser just to think clearly.</p>
+
+      <p><strong>Lor was started with a single question:</strong> What would a desktop browser look like if it were built from first principles for deep-work researchers, builders, and autonomous AI agents?</p>
+
+      <div class="callout">
+        <p><strong>The Core Hypothesis:</strong> By pairing a zero-clutter, pure monochrome obsidian canvas with an embedded visual node-graph (LorFlow) and internal MCP vibe-coding, the browser evolves from a passive document viewer into an autonomous thought engine.</p>
+      </div>
+
+      <h2>1. The Dual-Core Native Architecture</h2>
+      <p>Building a high-performance browser on macOS presents an interesting dilemma: pure Electron offers rich node ecosystem capabilities and rapid cross-platform UI, while pure AppKit / WKWebView offers unmatched native responsiveness, zero-memory footprints, and fluid trackpad physics.</p>
+
+      <p>Rather than compromising, Lor implements a <strong>dual-codebase architecture</strong>:</p>
+      <ul>
+        <li><strong>macOS Native Core (<code>Lor/</code>)</strong>: Built with Swift 5.9, AppKit, and a custom <code>WKWebViewPool</code> that recycles web views, applies custom visual effect blurs (<code>NSVisualEffectView</code>), and handles native gesture swipes between contextual spaces.</li>
+        <li><strong>Electron 33 Desktop Shell (<code>arc-browser/</code>)</strong>: Built with React 18, Vite, and TypeScript. Implements the complete multi-space manager, tab vaults, and the visual <strong>LorFlow</strong> studio canvas.</li>
+      </ul>
+
+      <p>Security across this boundary is non-negotiable. Every renderer-to-main IPC channel is strictly declared and validated in <code>electron/preload.ts</code>. We enforce <code>contextIsolation: true</code>, <code>nodeIntegration: false</code>, and sandbox all webview partition sessions.</p>
+
+      <h2>2. High-Level System Architecture Diagram</h2>
+      <p>The following hand-drawn architectural diagram illustrates how the Lor application host orchestrates the visual canvas, the LorFlow studio engine, local observability, and external cloud services:</p>
+
+      <figure class="post-figure">
+        <img src="assets/lor-architecture-diagram.svg" alt="Lor Browser Ecosystem Architecture Diagram">
+        <figcaption>System Architecture Diagram: Sandboxed host, LorFlow node engine, MCP assistant, and Google Docs live sync.</figcaption>
+      </figure>
+
+      <h2>3. LorFlow: Visual Autonomous Workflows in the Browser</h2>
+      <p>The crown jewel of Lor v0.2.0 is <strong>LorFlow</strong>: a visual node-graph automation studio built directly into the liquid glass canvas. Rather than relying on separate cloud automation platforms like Zapier or Make, LorFlow runs directly within the browser runtime.</p>
+
+      <figure class="post-figure">
+        <img src="assets/lorflow-studio.png" alt="LorFlow Studio in Lor Browser">
+        <figcaption>LorFlow Autonomous Studio: Node catalog, live execution pipeline, and Google Docs export.</figcaption>
+      </figure>
+
+      <p>A typical LorFlow pipeline connects modular nodes:</p>
+      <ol>
+        <li><strong>Prompt Trigger Node</strong>: Captures search queries, research questions, or user briefs.</li>
+        <li><strong>Google Search / Scraper Node</strong>: Executes multi-engine searches (Google, DuckDuckGo, Ecosia) and extracts relevant web text.</li>
+        <li><strong>Gemini AI Synthesis Node</strong>: Synthesizes character profiles, technical analyses, or comparative summaries using multi-tier Gemini Pro/Flash models.</li>
+        <li><strong>Conditional Branching &amp; Loops</strong>: Evaluates quality criteria and loops autonomously until a convergence threshold is met.</li>
+        <li><strong>Google Docs Live Export</strong>: Formats headings, structured bullet points, and citations directly into an authenticated Google Doc tab in real time.</li>
+      </ol>
+
+      <figure class="post-figure">
+        <img src="assets/lorflow-canvas.png" alt="LorFlow Directed Node Canvas">
+        <figcaption>Interactive squircle node canvas with bezier wire connections and parameter inspector.</figcaption>
+      </figure>
+
+      <h2>4. Vibe-Coding with Internal MCP (Model Context Protocol)</h2>
+      <p>One of the most radical capabilities in Lor is <strong>vibe coding your browser workflows</strong>. On the right side of the screen sits the Lor Core AI Assistant. We implemented an internal MCP service (<code>lorflowMcp.ts</code>) that exposes structured tools to the agent:</p>
+
+      <pre><code>// Internal MCP Actions available to the AI Assistant
+LorFlowMCP.getWorkflow();
+LorFlowMCP.addNode(type, name, config);
+LorFlowMCP.connectNodes(sourceId, targetId);
+LorFlowMCP.revertVersion(snapshotId);
+LorFlowMCP.fixNodeError(nodeId, errorContext);
+LorFlowMCP.runWorkflow();</code></pre>
+
+      <p>When you chat with Lor and say <em>"Add an AI synthesis node to summarize this research into 3 key takeaways and link it to my Google Doc"</em>, the assistant doesn't just reply with advice — it calls <code>LorFlowMCP</code>, modifies the live schema, and updates the canvas right before your eyes.</p>
+
+      <h2>5. "Fix with Lor in Chat" &amp; Self-Healing Workflows</h2>
+      <p>Automations often fail due to malformed payloads, rate limits, or schema mismatches. In LorFlow, nodes don't silently die: a failed node surfaces a sleek <strong>"Fix with Lor in Chat"</strong> button.</p>
+
+      <p>Clicking this button instantly opens the right AI chat tab and transmits the full execution context (node ID, node type, incoming payload, error stack trace, and parameters). The agent diagnoses the root cause in plain English, runs an automated fix through <code>LorFlowMCP.fixNodeError()</code>, and offers one-click action chips to rerun the repaired workflow.</p>
+
+      <h2>6. Continuous 24-Hour State Versioning &amp; Rollback</h2>
+      <p>Experimenting with automations should never risk losing past work. Every time LorFlow nodes are added, edited, connected, or vibe-coded, an immutable snapshot is recorded into local storage.</p>
+      <ul>
+        <li><strong>24-Hour Window</strong>: All snapshots created within the past 24 hours are retained.</li>
+        <li><strong>Relative Timestamps</strong>: The toolbar dropdown displays entries with relative markers (<em>Just now</em>, <em>5m ago</em>, <em>2h ago</em>) and node counts.</li>
+        <li><strong>One-Click Revert</strong>: Click <code>[Revert]</code> to instantly restore any past workflow state.</li>
+      </ul>
+
+      <h2>7. The Bottom 2% Crescent Trigger &amp; 15% Edge Peek</h2>
+      <p>Immersion requires that powerful tools stay invisible until you need them:</p>
+      <ul>
+        <li><strong>15% Screen Edge Peek</strong>: Press <code>Cmd + S</code> to collapse the sidebar into borderless web immersion. Move your cursor within the left 15% display edge to peek your vertical tabs and spaces.</li>
+        <li><strong>Bottom 2% Crescent Trigger</strong>: The LorFlow lunar crescent remains completely hidden off the bottom of the screen. Only when your mouse enters the bottom 2% does the solid crescent pop up. Dwelling on it charges the circumference beam and summons the workflow canvas.</li>
+      </ul>
+
+      <h2>Conclusion &amp; What's Ahead</h2>
+      <p>Lor is an ongoing work-in-progress, but v0.2.0 marks a major milestone: transitioning from a minimalist monochrome browser into an autonomous workspace where human researchers and AI agents collaborate seamlessly.</p>
+
+      <p>You can download the latest beta release directly from our GitHub repository and experience the future of autonomous web browsing today.</p>
+    </div>
+  </article>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>Handcrafted by Tyler Tan • Lor Browser v0.2.0 (Beta) • Released under MIT License</p>
+      <p style="margin-top: 6px;"><a href="index.html" style="color:#a1a1aa; text-decoration:none;">Home</a> • <a href="ARCHITECTURE.md" style="color:#a1a1aa; text-decoration:none;">Architecture Spec</a> • <a href="https://github.com/tylertzm/lor-browser" style="color:#a1a1aa; text-decoration:none;">GitHub</a></p>
+    </div>
+  </footer>
+</body>
+</html>

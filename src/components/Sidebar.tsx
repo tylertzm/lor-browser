@@ -37,6 +37,7 @@ interface SidebarProps {
   onNavigate: (url: string) => void;
   onSwipeSpace: (direction: 'left' | 'right') => void;
   onOpenArchive: () => void;
+  onOpenVault?: () => void;
   onOpenDownloads: () => void;
   onOpenAbout?: () => void;
   onOpenSettings?: (tab?: 'appearance' | 'history' | 'shortcuts' | 'about') => void;
@@ -82,6 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onNavigate,
   onSwipeSpace,
   onOpenArchive,
+  onOpenVault,
   onOpenDownloads,
   onOpenAbout,
   onOpenSettings,
@@ -394,6 +396,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         onDeleteSpace={onDeleteSpace}
         isPrivate={isPrivate}
         onOpenArchive={onOpenArchive}
+        onOpenVault={onOpenVault}
         onOpenDownloads={onOpenDownloads}
         onOpenAbout={onOpenAbout}
         onOpenSettings={onOpenSettings}

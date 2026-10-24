@@ -12,6 +12,7 @@ interface CommandBarProps {
   onClose: () => void;
   onSubmit: (url: string, isNewTab: boolean) => void;
   onSelectTab?: (tabId: string) => void;
+  onOpenVault?: () => void;
 }
 
 interface SuggestionItem {
@@ -34,7 +35,8 @@ export const CommandBar: React.FC<CommandBarProps> = ({
   isPrivate = false,
   onClose,
   onSubmit,
-  onSelectTab
+  onSelectTab,
+  onOpenVault
 }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
@@ -139,6 +141,17 @@ export const CommandBar: React.FC<CommandBarProps> = ({
       return results;
     }
 
+    // Match Vault Command
+    if ('vault'.startsWith(q) || 'tab vault'.includes(q) || 'memory'.startsWith(q)) {
+      results.push({
+        id: 'cmd-tab-vault',
+        title: 'Open Tab Vault (Search on-device memory & frozen tabs)',
+        url: 'lor://vault',
+        domain: 'Tab Vault (⌘⇧V)',
+        source: 'history'
+      });
+    }
+
     // 2. Match currently open tabs
     if (tabs && tabs.length > 0) {
       for (const t of tabs) {
@@ -241,6 +254,11 @@ export const CommandBar: React.FC<CommandBarProps> = ({
   if (!isOpen) return null;
 
   const handleSelectSuggestion = (item: SuggestionItem) => {
+    if (item.url === 'lor://vault') {
+      onClose();
+      if (onOpenVault) onOpenVault();
+      return;
+    }
     if (item.source === 'open-tab' && item.tabId && onSelectTab && mode === 'new-tab') {
       onSelectTab(item.tabId);
       onClose();

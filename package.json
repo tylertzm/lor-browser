@@ -1,6 +1,6 @@
 {
   "name": "lor-browser",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Lor - Modern Liquid Glass Monochrome Browser for macOS",
   "main": "dist-electron/main.js",
   "author": "Tyler Tan",
@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "lucide-react": "^0.460.0",
+    "playwright-core": "^1.64.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -44,7 +45,16 @@
       "target": "dmg",
       "category": "public.app-category.productivity",
       "identity": null,
-      "icon": "build/icon.icns"
+      "icon": "build/icon.icns",
+      "extraResources": [
+        {
+          "from": "bin",
+          "to": "bin",
+          "filter": [
+            "*"
+          ]
+        }
+      ]
     },
     "dmg": {
       "title": "Lor Installer"

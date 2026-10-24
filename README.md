@@ -1,4 +1,4 @@
-# Lor Browser 🪐
+# Lor Browser
 
 <div align="center">
 
@@ -7,20 +7,20 @@
 <img src="docs/assets/logo.png" width="96" height="96" alt="Lor Logo" />
 
 # Lor
-### Modern Liquid Glass & Monochrome Browser for macOS
+### The Autonomous Liquid Glass &amp; Monochrome Obsidian Browser
 
-A minimalist desktop browser built with Electron, TypeScript, and React combining spaces & vertical tabs with a pure monochrome aesthetic.
+A minimalist desktop browser built with Electron 33, TypeScript, React 18, and native macOS AppKit WKWebView, combining contextual spaces with autonomous visual AI workflows (LorFlow) and a pure monochrome aesthetic.
 
 <br>
 
-[![macOS DMG](https://img.shields.io/badge/macOS%20DMG-Lor--0.1.0--arm64.dmg%20(196MB)-ffffff?style=for-the-badge&logo=apple&logoColor=black)](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg)
-[![Windows Setup](https://img.shields.io/badge/Windows%20Setup-Lor--Setup--0.1.0.exe%20(81MB)-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-Setup-0.1.0.exe)
-[![GitHub Release](https://img.shields.io/badge/Release-v0.1.0--Beta-181717?style=for-the-badge&logo=github)](https://github.com/tylertzm/lor-browser/releases/tag/v0.1.0)
+[![macOS DMG](https://img.shields.io/badge/macOS%20DMG-Lor--0.2.0--arm64.dmg-ffffff?style=for-the-badge&logo=apple&logoColor=black)](https://github.com/tylertzm/lor-browser/releases)
+[![GitHub Release](https://img.shields.io/badge/Release-v0.2.0--Beta-181717?style=for-the-badge&logo=github)](https://github.com/tylertzm/lor-browser/releases)
+[![Architecture](https://img.shields.io/badge/Architecture-System%20Diagram-24292e?style=for-the-badge&logo=diagramsdotnet)](docs/ARCHITECTURE.md)
 [![Website](https://img.shields.io/badge/Website-Live%20on%20GitHub%20Pages-brightgreen?style=for-the-badge)](https://tylertzm.github.io/lor-browser/)
 
 <br>
 
-[**Website**](https://tylertzm.github.io/lor-browser/) • [**Download macOS (.dmg)**](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg) • [**Download Windows (.exe)**](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-Setup-0.1.0.exe) • [**GitHub Releases**](https://github.com/tylertzm/lor-browser/releases) • [**Report Bug**](https://github.com/tylertzm/lor-browser/issues)
+[**Website**](https://tylertzm.github.io/lor-browser/) • [**Download macOS (.dmg)**](https://github.com/tylertzm/lor-browser/releases) • [**GitHub Releases**](https://github.com/tylertzm/lor-browser/releases) • [**Architecture Specs**](docs/ARCHITECTURE.md) • [**Report Bug**](https://github.com/tylertzm/lor-browser/issues)
 
 <br>
 
@@ -30,125 +30,117 @@ A minimalist desktop browser built with Electron, TypeScript, and React combinin
 
 ---
 
-## 🌟 Key Highlights
+## The Vision of Lor
+
+Modern commercial web browsers have devolved into cluttered, tracking-heavy application launchers dominated by telemetry, intrusive notifications, and distraction.
+
+**Lor is built from first principles for deep work, research, and autonomous agency:**
+1. **Pure Monochrome Obsidian Hierarchy**: Zero saturated brand distractions, rainbow badges, or garish popups. Pure black canvas (`#000000`), carbon panels (`#0a0a0c`), and high-contrast typography engineered for total cognitive focus.
+2. **LorFlow Autonomous Visual Studio**: A node-graph automation studio that allows autonomous agents to execute multi-turn web research, synthesize complex findings, and live-export directly into formatted Google Docs.
+3. **Internal MCP Vibe-Coding**: Control, construct, and modify browser workflows using natural language via an embedded Model Context Protocol (MCP) bridge directly in the right AI chat tab.
+4. **24-Hour Continuous Rollback**: Automatic snapshots saved before every mutation so you can revert any workflow state up to one day back.
+5. **Dual-Engine Architecture**: Hardened Electron 33 desktop shell paired with an ultra-light native macOS AppKit / WKWebView core.
+
+---
+
+## Architectural System Overview
+
+Lor's modular architecture separates the isolated UI canvas from the autonomous workflow execution engine and external cloud services:
 
 <div align="center">
 
-| Prologue | Spaces & Navigation |
-| :---: | :---: |
-| ![Lor Prologue](docs/assets/lor-onboarding.png) | ![Lor Spaces](docs/assets/spaces-preview.png) |
+[![Lor Browser System Architecture](docs/assets/lor-architecture-diagram.svg)](docs/ARCHITECTURE.md)
+
+*Detailed hand-drawn architectural specification available in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).*
 
 </div>
 
-1. **Pure Liquid Monochrome Canvas**:
-   - Deep obsidian canvas (`#000000`), carbon panels (`#0a0a0c`), crisp white typography (`#ffffff`), and silver accents.
-   - High-contrast, zero-clutter visual hierarchy engineered for deep focus.
+---
 
-2. **Collapsible Sidebar with 15% Screen Peek**:
-   - Press **`Cmd + S`** or click **`[|]`** to collapse the sidebar into borderless web immersion.
-   - **Hover to Peek**: Move your cursor within the **left 15% edge of your display** to slide the navigation bar open instantly.
-   - Click the lock toggle button while peeking to pin it permanently open.
+## Visual Highlights
 
-3. **Dynamic Isolated Spaces**:
-   - Organize workflows into distinct workspaces (`Personal`, `Work`, `Labs`).
-   - Switch between them with smooth trackpad gestures (two-finger horizontal swipe).
-   - Real-time space management and local persistence.
+<div align="center">
 
-4. **Semantic Tab Tidy**:
-   - Clean up tab chaos with one click. Intelligently clusters open tabs into categorized buckets:
-     - `DEV & TECH` (GitHub, StackOverflow, Docs, Claude)
-     - `RESEARCH & DOCS` (ArXiv, Wikipedia, OWASP)
-     - `COMMUNICATIONS` (Proton, Slack, LinkedIn, Discord)
-     - `MEDIA & VIDEO` (YouTube, Twitch, Streaming)
-     - `GENERAL`
-   - Automatically deduplicates redundant tabs.
+| LorFlow Autonomous Studio | Visual Directed Node Canvas |
+| :---: | :---: |
+| ![LorFlow Studio](docs/assets/lorflow-studio.png) | ![LorFlow Canvas](docs/assets/lorflow-canvas.png) |
 
-5. **Pinned Tab Anchors**:
-   - Hover over any tab and click the **`📌`** pin icon to anchor it to the top of your space.
-   - Quick **`+ Pin Current`** button to anchor your active working tab immediately.
+| Spaces & Navigation | Onboarding Prologue |
+| :---: | :---: |
+| ![Lor Spaces](docs/assets/spaces-preview.png) | ![Lor Prologue](docs/assets/lor-onboarding.png) |
 
-6. **Live Inline Omnibar**:
-   - Press **`Cmd + L`** to enter addresses or queries directly in place.
-   - One-click clean URL copying with instant visual confirmation.
+</div>
 
 ---
 
-## 📥 Download & Installation
+## Core Innovations
 
-### Option 1: macOS (Apple Silicon M1/M2/M3/M4)
-👉 **[Download Lor-0.1.0-arm64.dmg (196 MB)](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-0.1.0-arm64.dmg)**
+### 1. LorFlow Autonomous Studio & Self-Healing
+- **Visual Directed Graph**: Build multi-step research and data pipelines connecting Prompt triggers, Google Search scrapers, Gemini synthesis, conditional branch logic, reiteration loops, and Google Docs export.
+- **Fix with Lor in Chat**: When a node fails, one click transmits complete execution context to the right AI assistant to explain root cause and apply auto-repairs directly.
+- **Autonomous Convergence**: Define satisfaction criteria and let the agent reiterate autonomously until the research goal is achieved.
+- **Bottom 2% Lunar Crescent Trigger**: A solid crescent trigger at the bottom 2% of the display that charges its circumference on cursor dwell to launch the studio.
 
-1. Open `Lor-0.1.0-arm64.dmg`.
+### 2. Conversational Vibe-Coding (Internal MCP)
+- The right AI Assistant is wired directly to `LorFlowMCP`, an internal Model Context Protocol provider.
+- Say *"Add a search node for quantum computing and connect it to Google Docs"* and watch the canvas wire itself in real time.
+- Request rollbacks (*"Revert to the state from 10 minutes ago"*) or query execution state conversantly.
+
+### 3. 24-Hour Continuous Versioning
+- Full state snapshots recorded automatically prior to any workflow edits.
+- Toolbar history dropdown displays relative timestamps (*Just now*, *5m ago*, *2h ago*), node counts, and one-click rollback buttons.
+- Prunes entries older than 24 hours to keep client-side storage lightweight.
+
+### 4. 15% Edge Peek Navigation
+- Press **`Cmd + S`** or click **`[|]`** to collapse the sidebar into borderless web immersion.
+- **Hover to Peek**: Move your cursor within the **left 15% edge of your display** to slide the navigation bar open instantly.
+- Toggle the lock icon while peeking to pin the sidebar permanently.
+
+### 5. Semantic Tab Tidy & Tab Vault
+- Clean tab clutter with one click. Automatically clusters open tabs into categorized buckets (`DEV & TECH`, `RESEARCH & DOCS`, `COMMUNICATIONS`, `MEDIA`, `GENERAL`).
+- Stash inactive tabs into the local **Tab Vault** to keep memory usage minimal.
+
+---
+
+## Installation & Releases
+
+### macOS (Apple Silicon M1/M2/M3/M4)
+Download the latest DMG from [GitHub Releases](https://github.com/tylertzm/lor-browser/releases):
+
+1. Open `Lor-0.2.0-arm64.dmg`.
 2. Drag `Lor.app` into **Applications**.
-3. **If Gatekeeper shows an alert on first launch:**
-   Because this is an independent open-source release without an Apple Developer ID, run this in Terminal once:
+3. If macOS Gatekeeper alerts on first launch for unnotarized builds, run:
    ```bash
    xattr -cr /Applications/Lor.app
    ```
-   *(Or go to System Settings → Privacy & Security → Click "Open Anyway".)*
+   *(Or navigate to System Settings -> Privacy & Security -> Click "Open Anyway".)*
 
 ---
 
-### Option 2: Windows (64-bit Windows 10/11)
-👉 **[Download Lor-Setup-0.1.0.exe (81 MB)](https://github.com/tylertzm/lor-browser/releases/download/v0.1.0/Lor-Setup-0.1.0.exe)**
-
-1. Double-click `Lor-Setup-0.1.0.exe`.
-2. Follow the installer instructions (creates desktop and Start Menu shortcuts).
-3. If Windows SmartScreen prompts on first launch, click **"More info"** → **"Run anyway"**.
-
----
-
-## ⌨️ Shortcuts & Gestures
-
-| Shortcut / Gesture | Action |
-| :--- | :--- |
-| **Move cursor to left 15% edge** | **Peek / Reveal Collapsed Sidebar** |
-| **Two-finger horizontal swipe** | **Swipe between Spaces** |
-| `Cmd + S` | Toggle / Lock Sidebar |
-| `Cmd + T` | New Tab |
-| `Cmd + L` | Focus Live Address Bar / Omnibar |
-| `Cmd + W` | Close Active Tab |
-| `Cmd + [` / `Cmd + ]` | Navigate Back / Forward |
-| `Cmd + R` | Reload Current Page |
-
----
-
-## 🛠️ Building from Source
-
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v18+)
-- [npm](https://www.npmjs.com/) (v9+)
-- macOS (Apple Silicon or Intel)
-
-### Commands
+## Development & Build Commands
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/tylertzm/lor-browser.git
-cd lor-browser
+cd lor-browser/arc-browser
 
 # Install dependencies
 npm install
 
-# Start development mode
+# Run development mode
 npm run dev
 
-# Package native macOS .dmg bundle
+# Build production bundle
+npm run build
+
+# Package macOS DMG / Distributable
 npm run package
 ```
 
-The compiled installer will be generated in `dist/Lor-0.1.0-arm64.dmg`.
-
 ---
 
-## 🧑‍💻 Creator Spotlight
+## Security & Privacy Standards
 
-Conceived, designed, and engineered with obsession by **Tyler Tan**.
-
-- **GitHub**: [@tylertzm](https://github.com/tylertzm)
-
----
-
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
+- **Hardened Sandboxing**: `contextIsolation: true`, `nodeIntegration: false`, zero direct Node access from webviews.
+- **Anti-Bot Cloaking**: Preload scripts sanitize navigator properties to protect against automated fingerprinting.
+- **Zero Telemetry**: All history, tab vaults, and workflow snapshots remain strictly stored on your local device.

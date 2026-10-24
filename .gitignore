@@ -3,6 +3,9 @@ node_modules/
 .pnp
 .pnp.js
 
+# Compiled native binaries
+bin/
+
 # Production build outputs
 dist/
 dist-electron/
