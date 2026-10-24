@@ -741,6 +741,145 @@ export const App: React.FC = () => {
     return cleanup;
   }, [tabs, activeSpaceId]);
 
+  // Handle PiP WebRTC signaling & real-time video stream negotiation
+  useEffect(() => {
+    // @ts-ignore
+    if (!window.electronAPI?.onPiPSignal) return;
+
+    // @ts-ignore
+    const cleanup = window.electronAPI.onPiPSignal(async (signal: any) => {
+      const targetTabId = activeMediaTabIdRef.current || activeTabId;
+      if (!targetTabId) return;
+      const wv = webviewsRef.current[targetTabId];
+      if (!wv || typeof wv.executeJavaScript !== 'function') return;
+
+      if (signal.type === 'request-stream') {
+        try {
+          const offer = await wv.executeJavaScript(`
+            (async function() {
+              try {
+                const v = document.querySelector('video.html5-main-video') || document.querySelector('video');
+                if (!v) return { error: 'no-video' };
+
+                if (window.__pipSenderPC) {
+                  try { window.__pipSenderPC.close(); } catch(e) {}
+                  window.__pipSenderPC = null;
+                }
+
+                let stream = null;
+                try {
+                  if (typeof v.captureStream === 'function') {
+                    stream = v.captureStream();
+                  } else if (typeof v.mozCaptureStream === 'function') {
+                    stream = v.mozCaptureStream();
+                  }
+                } catch(e) {
+                  console.warn('[PiP Host] Direct captureStream error:', e);
+                }
+
+                // Fallback: If captureStream failed, render via canvas capture
+                if (!stream || stream.getVideoTracks().length === 0) {
+                  try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = v.videoWidth || 640;
+                    canvas.height = v.videoHeight || 360;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                      ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+                      stream = canvas.captureStream(30);
+                      const drawInterval = setInterval(() => {
+                        if (!window.__pipSenderPC || window.__pipSenderPC.connectionState === 'closed') {
+                          clearInterval(drawInterval);
+                          return;
+                        }
+                        if (!v.paused && !v.ended) {
+                          ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+                        }
+                      }, 33);
+                    }
+                  } catch(e) {
+                    console.warn('[PiP Host] Canvas capture fallback error:', e);
+                  }
+                }
+
+                if (!stream || stream.getVideoTracks().length === 0) {
+                  return { error: 'no-stream-tracks' };
+                }
+
+                const pc = new RTCPeerConnection({ iceServers: [] });
+                window.__pipSenderPC = pc;
+
+                stream.getTracks().forEach((track) => {
+                  pc.addTrack(track, stream);
+                });
+
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+
+                if (pc.iceGatheringState !== 'complete') {
+                  await new Promise((resolve) => {
+                    const check = () => {
+                      if (pc.iceGatheringState === 'complete') {
+                        pc.removeEventListener('icegatheringstatechange', check);
+                        resolve(null);
+                      }
+                    };
+                    pc.addEventListener('icegatheringstatechange', check);
+                    setTimeout(() => resolve(null), 800);
+                  });
+                }
+
+                return {
+                  type: 'offer',
+                  sdp: JSON.parse(JSON.stringify(pc.localDescription))
+                };
+              } catch (err) {
+                return { error: err.message };
+              }
+            })()
+          `);
+
+          if (offer && offer.sdp) {
+            // @ts-ignore
+            window.electronAPI.pipSignal({ type: 'offer', sdp: offer.sdp });
+          }
+        } catch (err) {
+          console.warn('[PiP Host] Failed to generate stream offer:', err);
+        }
+      } else if (signal.type === 'answer' && signal.sdp) {
+        try {
+          await wv.executeJavaScript(`
+            (async function() {
+              try {
+                if (window.__pipSenderPC) {
+                  await window.__pipSenderPC.setRemoteDescription(new RTCSessionDescription(${JSON.stringify(signal.sdp)}));
+                }
+              } catch (e) {
+                console.warn('[PiP Host] Failed to apply remote answer in webview:', e);
+              }
+            })()
+          `);
+        } catch (err) {
+          console.warn('[PiP Host] Failed to forward answer to webview:', err);
+        }
+      } else if (signal.type === 'candidate' && signal.candidate) {
+        try {
+          await wv.executeJavaScript(`
+            (async function() {
+              try {
+                if (window.__pipSenderPC) {
+                  await window.__pipSenderPC.addIceCandidate(new RTCIceCandidate(${JSON.stringify(signal.candidate)}));
+                }
+              } catch (e) {}
+            })()
+          `);
+        } catch (err) {}
+      }
+    });
+
+    return cleanup;
+  }, [activeTabId]);
+
   const recordHistory = (tab: Partial<Tab>) => {
     if (isPrivate) return;
     if (!tab.url || tab.url.startsWith('about:') || tab.url === 'about:blank') return;

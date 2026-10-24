@@ -30,6 +30,12 @@ export const ArcPictureInPictureWindow: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const [hasVideoStream, setHasVideoStream] = useState<boolean>(false);
+  const hasVideoStreamRef = useRef<boolean>(false);
+  const mediaTypeRef = useRef<string | undefined>(mediaInfo.mediaType);
+
+  useEffect(() => {
+    mediaTypeRef.current = mediaInfo.mediaType;
+  }, [mediaInfo.mediaType]);
 
   // Format seconds to mm:ss or hh:mm:ss
   const formatTime = (secs: number) => {
@@ -73,10 +79,22 @@ export const ArcPictureInPictureWindow: React.FC = () => {
     pcRef.current = pc;
 
     pc.ontrack = (event) => {
-      if (videoRef.current && event.streams && event.streams[0]) {
-        videoRef.current.srcObject = event.streams[0];
+      if (videoRef.current) {
+        const stream = (event.streams && event.streams[0])
+          ? event.streams[0]
+          : new MediaStream([event.track]);
+        videoRef.current.srcObject = stream;
         videoRef.current.play().catch(() => {});
+        hasVideoStreamRef.current = true;
         setHasVideoStream(true);
+
+        const videoTrack = stream.getVideoTracks()[0] || event.track;
+        if (videoTrack) {
+          videoTrack.onended = () => {
+            hasVideoStreamRef.current = false;
+            setHasVideoStream(false);
+          };
+        }
       }
     };
 
@@ -87,31 +105,66 @@ export const ArcPictureInPictureWindow: React.FC = () => {
       }
     };
 
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+        hasVideoStreamRef.current = false;
+        setHasVideoStream(false);
+      }
+    };
+
     // @ts-ignore
     const cleanupSignal = window.electronAPI.onPiPSignal(async (signal: any) => {
       try {
-        if (signal.type === 'offer') {
+        if (signal.type === 'offer' && signal.sdp) {
           await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
+
+          if (pc.iceGatheringState !== 'complete') {
+            await new Promise((resolve) => {
+              const check = () => {
+                if (pc.iceGatheringState === 'complete') {
+                  pc.removeEventListener('icegatheringstatechange', check);
+                  resolve(null);
+                }
+              };
+              pc.addEventListener('icegatheringstatechange', check);
+              setTimeout(() => resolve(null), 600);
+            });
+          }
+
           // @ts-ignore
-          window.electronAPI.pipSignal({ type: 'answer', sdp: answer });
+          window.electronAPI.pipSignal({
+            type: 'answer',
+            sdp: JSON.parse(JSON.stringify(pc.localDescription || answer))
+          });
         } else if (signal.type === 'candidate' && signal.candidate) {
-          await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+          await pc.addIceCandidate(new RTCIceCandidate(signal.candidate)).catch(() => {});
         }
       } catch (err) {
         console.warn('[PiP WebRTC] Signal error:', err);
       }
     });
 
-    // Request stream from origin
-    // @ts-ignore
-    window.electronAPI.pipSignal({ type: 'request-stream' });
+    // Request stream from origin tab
+    const requestStream = () => {
+      // @ts-ignore
+      window.electronAPI?.pipSignal?.({ type: 'request-stream' });
+    };
+
+    requestStream();
+    const retryTimer = setInterval(() => {
+      if (!hasVideoStreamRef.current && mediaTypeRef.current !== 'audio') {
+        requestStream();
+      }
+    }, 2000);
 
     return () => {
+      clearInterval(retryTimer);
       cleanupSignal();
       pc.close();
       pcRef.current = null;
+      hasVideoStreamRef.current = false;
     };
   }, []);
 

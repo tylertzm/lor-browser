@@ -430,6 +430,7 @@ const WebViewItem: React.FC<WebViewItemProps> = ({
   const initialUrl = useRef<string>(tab.url);
   const currentLoadedUrl = useRef<string>(tab.url);
   const loadingTimeoutRef = useRef<any>(null);
+  const mediaSyncTimerRef = useRef<any>(null);
 
   // Imperatively navigate only when tab.url was changed externally (e.g. from Address Bar / Command Bar)
   useEffect(() => {
@@ -612,14 +613,14 @@ const WebViewItem: React.FC<WebViewItemProps> = ({
       }
     };
 
-    const handleMediaStarted = () => {
+    const queryAndBroadcastMedia = () => {
       try {
         if (!webview) return;
         if (typeof webview.isLoading === 'function' && webview.isLoading()) return;
         webview.executeJavaScript(`
           (function() {
             try {
-              const v = document.querySelector('video') || document.querySelector('audio');
+              const v = document.querySelector('video.html5-main-video') || document.querySelector('video') || document.querySelector('audio');
               if (!v) return null;
               return {
                 hasMedia: true,
@@ -642,7 +643,17 @@ const WebViewItem: React.FC<WebViewItemProps> = ({
       } catch {}
     };
 
+    const handleMediaStarted = () => {
+      queryAndBroadcastMedia();
+      if (mediaSyncTimerRef.current) clearInterval(mediaSyncTimerRef.current);
+      mediaSyncTimerRef.current = setInterval(queryAndBroadcastMedia, 750);
+    };
+
     const handleMediaPaused = () => {
+      if (mediaSyncTimerRef.current) {
+        clearInterval(mediaSyncTimerRef.current);
+        mediaSyncTimerRef.current = null;
+      }
       if (onMediaStateChange) {
         onMediaStateChange(tab.id, { isPlaying: false, tabId: tab.id });
       }
@@ -665,6 +676,7 @@ const WebViewItem: React.FC<WebViewItemProps> = ({
 
     return () => {
       if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+      if (mediaSyncTimerRef.current) clearInterval(mediaSyncTimerRef.current);
       try {
         webview.removeEventListener('did-start-loading', handleStartLoading);
         webview.removeEventListener('did-stop-loading', handleStopLoading);
