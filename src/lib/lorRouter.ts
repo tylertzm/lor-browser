@@ -124,14 +124,14 @@ const ROUTE_PROTOTYPES: Record<LorRouteId, string[]> = {
     'sounds good',
   ],
   memory_query: [
-    'do you remember what i said',
-    'what did we talk about earlier',
-    'recall our conversation about music',
-    'what are my preferences',
-    'what do you know about me',
-    'last time we discussed',
-    'my favorite artist you noted',
-    'from our previous conversation',
+    'do you remember what i said earlier',
+    'what did we discuss before this',
+    'what did i tell you in our previous chat',
+    'what are my saved preferences',
+    'what notes did you take about me',
+    'check what you remember about me',
+    'show me what we talked about previously',
+    'from our previous session do you recall my note'
   ],
   translate: [
     'translate this page',
@@ -192,8 +192,9 @@ const ROUTE_PROTOTYPES: Record<LorRouteId, string[]> = {
 // Follows Anthropic's guidance: simple deterministic rules for clear cases
 // before escalating to expensive ML-based classification.
 // ---------------------------------------------------------------------------
-function heuristicRoute(contextText: string): { route: LorRouteId; confidence: number } | null {
-  const t = contextText.toLowerCase().trim();
+function heuristicRoute(currentMessage: string, contextText: string): { route: LorRouteId; confidence: number } | null {
+  const currentMsg = currentMessage.toLowerCase().trim();
+  const t = currentMsg; // High-priority deterministic rules MUST inspect the current user message!
 
   // Browser actions — high-confidence regex patterns
   if (/(split( screen)?|side by side|dual view|vault tabs|freeze tabs|rain sound|open new tab|close tab|switch to .* space)\b/i.test(t)) {
@@ -210,9 +211,9 @@ function heuristicRoute(contextText: string): { route: LorRouteId; confidence: n
     return { route: 'page_context', confidence: 0.92 };
   }
 
-  // Memory queries
-  if (/(remember|recall|previous (conversation|chat)|what did (i|we) (say|talk|discuss)|from earlier|my preferences|what do you know about me)/i.test(t)) {
-    return { route: 'memory_query', confidence: 0.9 };
+  // Memory queries: ONLY trigger when user explicitly requests memory/notes/preferences recall
+  if (/^(do you remember|remember when|what did (i|we) (say|talk|discuss)|recall (our|my|what)|check (my )?notes|what are my preferences|what do you know about me|show all notes)\b/i.test(t)) {
+    return { route: 'memory_query', confidence: 0.95 };
   }
 
   // Translation requests
@@ -231,12 +232,20 @@ function heuristicRoute(contextText: string): { route: LorRouteId; confidence: n
     return { route: 'deep_research', confidence: 0.96 };
   }
 
-  // Explicit or implicit research intent & temporal / release / real-time inquiries
+  // Explicit or implicit research intent & temporal / release / real-time / factual inquiries
   if (
-    /(when (is|will|does|the next)|coming out|airing|next episode|next season|release date|schedule|air date|broadcast date|latest episode)\b/i.test(t) ||
-    /(who is|what is|tell me about|research|find info|look up|when did|where is|how does|weather|forecast|stock price|latest news|current status)/i.test(t)
+    /(when (is|was|will|did|does|the next)|coming out|airing|next episode|next season|last comeback|latest comeback|comeback|release date|schedule|air date|broadcast date|latest episode|last album|discography)\b/i.test(t) ||
+    /(who is|who was|what is|what was|tell me about|research|find info|look up|when did|when was|where is|how does|weather|forecast|stock price|latest news|current status)/i.test(t)
   ) {
     return { route: 'web_research', confidence: 0.94 };
+  }
+
+  // Follow-up entity corrections or continuations (e.g. "i mean fx", "no FX")
+  if (/^(i mean|no,?\s|actually\b|not that)\s+/i.test(t)) {
+    const ctxLower = contextText.toLowerCase();
+    if (ctxLower.includes('search') || ctxLower.includes('comeback') || ctxLower.includes('release') || ctxLower.includes('who') || ctxLower.includes('what') || ctxLower.includes('when')) {
+      return { route: 'web_research', confidence: 0.94 };
+    }
   }
 
   // Follow-up queries asking for continuation of research
@@ -371,7 +380,7 @@ export async function routeMessage(
   const contextText = buildRoutingContext(currentMessage, chatHistory);
 
   // Tier 1: Fast deterministic heuristics (Anthropic's "simple workflow" principle)
-  const heuristic = heuristicRoute(contextText);
+  const heuristic = heuristicRoute(currentMessage, contextText);
   if (heuristic && heuristic.confidence >= 0.88) {
     return {
       route: heuristic.route,

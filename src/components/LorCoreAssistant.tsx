@@ -1150,21 +1150,53 @@ export const LorCoreAssistant: React.FC<LorCoreAssistantProps> = ({
       return null;
     }
 
-    // 1. Release schedules, airing status, next episodes, or temporal inquiries
-    const isReleaseOrScheduleQuery = /(when (is|will|does|the next)|coming out|airing|next episode|next season|release date|schedule|air date|broadcast date|when next|next one)\b/i.test(trimmed);
+    // 0. Follow-up entity corrections or clarifications (e.g., "i mean fx", "no FX", "no, fx")
+    const correctionMatch = trimmed.match(/^(?:i mean|no,?\s*(?:i mean)?|actually|not that,?\s*(?:i mean)?)\s+([a-zA-Z0-9_\s'()/-]+)/i);
+    if (correctionMatch && correctionMatch[1]) {
+      const correctedEntity = correctionMatch[1].replace(/[?!.]+$/, '').trim();
+      if (correctedEntity) {
+        // Check if previous user turn had an inquiry aspect (e.g. "last comeback", "album", "release")
+        const recentUserTurns = recentHistory.filter(m => m.sender === 'user').slice(-3);
+        const prevQuery = recentUserTurns[recentUserTurns.length - 1]?.text || '';
+        const aspectMatch = prevQuery.match(/(last\s+comeback|latest\s+comeback|comeback|release\s+date|latest\s+album|new\s+album|discography|next\s+episode|next\s+season)/i);
+        if (aspectMatch) {
+          return `${correctedEntity} ${aspectMatch[1]}`;
+        }
+        return correctedEntity;
+      }
+    }
+
+    // 1. Questions asking "when was / is / did <subject> [last comeback / release date / etc.]"
+    const whenMatch = trimmed.match(/^(?:can\s+you\s+)?(?:tell\s+me\s+)?(?:do\s+you\s+know\s+)?when\s+(?:was|is|did|will|does)\s+(?:the\s+)?(.+?)[?!.]*$/i);
+    if (whenMatch && whenMatch[1]) {
+      const inner = whenMatch[1].trim();
+      const ofMatch = inner.match(/^(?:last|latest)?\s*(?:comeback|album|release|episode|season)\s+of\s+([a-zA-Z0-9_\s'()/-]+)/i);
+      if (ofMatch && ofMatch[1]) {
+        return `${ofMatch[1].trim()} last comeback`;
+      }
+      return inner;
+    }
+
+    // 2. Release schedules, airing status, next episodes, or temporal inquiries
+    const isReleaseOrScheduleQuery = /(when (is|was|will|did|does|the next)|coming out|airing|next episode|next season|release date|schedule|air date|broadcast date|last comeback|latest comeback|comeback|when next|next one)\b/i.test(trimmed);
     if (isReleaseOrScheduleQuery) {
       // Look for a specific subject in the current query
-      const explicitSubject = trimmed.match(/(?:for|about|of|on)\s+([A-Za-z0-9_\s'-]+?)(?:\s+(?:season|episode|release|airing|coming)|\?|$)/i);
-      if (explicitSubject && explicitSubject[1] && explicitSubject[1].trim().length > 2) {
-        return `${explicitSubject[1].trim()} release schedule next episode`;
+      const explicitSubject = trimmed.match(/(?:for|about|of|on)\s+([A-Za-z0-9_\s'()-]+?)(?:\s+(?:season|episode|release|airing|coming|comeback)|\?|$)/i);
+      if (explicitSubject && explicitSubject[1] && explicitSubject[1].trim().length > 1) {
+        return `${explicitSubject[1].trim()} release schedule`;
       }
 
-      // Check recent conversation history for active topic (e.g., "Ao Ashi", "Season 2", etc.)
-      const recentTurns = [...recentHistory].reverse().slice(0, 8);
+      const subjectBefore = trimmed.match(/(?:can\s+you\s+)?(?:tell\s+me\s+)?(?:when\s+(?:was|is|did))\s+([A-Za-z0-9_\s'()-]+?)\s+(?:last\s+comeback|comeback|release|album|episode)/i);
+      if (subjectBefore && subjectBefore[1]) {
+        return `${subjectBefore[1].trim()} release schedule`;
+      }
+
+      // Check recent user conversation history for what the user ACTUALLY typed
+      const recentTurns = [...recentHistory].filter(m => m.sender === 'user').reverse().slice(0, 4);
       for (const m of recentTurns) {
-        const showMatch = m.text.match(/\b(ao ashi|jujutsu kaisen|frieren|one piece|bleach|chainsaw man|[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/i);
-        if (showMatch && showMatch[1] && !['I', 'You', 'Lor', 'Google', 'Season', 'Episode', 'Yes', 'No'].includes(showMatch[1])) {
-          return `${showMatch[1]} Season 2 next episode release date schedule`;
+        const userSubject = m.text.replace(/^(can you tell me|when was|what is|tell me about)\s+/i, '').replace(/[?!.]+$/, '').trim();
+        if (userSubject.length > 1 && userSubject.length < 30) {
+          return `${userSubject} release schedule`;
         }
       }
 
@@ -1172,13 +1204,13 @@ export const LorCoreAssistant: React.FC<LorCoreAssistantProps> = ({
       if (activeTab?.title && !['New Tab', 'Google', 'Blank', 'Untitled'].includes(activeTab.title)) {
         const cleanTabTitle = activeTab.title.replace(/\s*-\s*(Google Search|YouTube|Wikipedia|Reddit).*$/i, '').trim();
         if (cleanTabTitle.length > 2) {
-          return `${cleanTabTitle} next episode release date schedule`;
+          return `${cleanTabTitle} release schedule`;
         }
       }
     }
 
-    // 2. Explicit search keywords
-    const explicitMatch = trimmed.match(/^(?:what is|who is|tell me about|research|find|search for|look up|explain|how does|what are|when did|where is|why is|how is)\s+(.+)/i);
+    // 3. Explicit search keywords
+    const explicitMatch = trimmed.match(/^(?:what is|who is|what was|who was|tell me about|research|find|search for|look up|explain|how does|what are|when did|where is|why is|how is)\s+(.+)/i);
     if (explicitMatch && explicitMatch[1]) {
       const q = explicitMatch[1].replace(/[?!.]+$/, '').trim();
       if (q.length > 2 && !/^(it|that|this|they|you|he|she|we)\b/i.test(q)) {
@@ -1186,7 +1218,7 @@ export const LorCoreAssistant: React.FC<LorCoreAssistantProps> = ({
       }
     }
 
-    // 3. Question format: "is cortis a boyband?", "who is keonho?", "weather in berlin?"
+    // 4. Question format: "is cortis a boyband?", "who is keonho?", "weather in berlin?"
     if (trimmed.endsWith('?')) {
       const q = trimmed.replace(/\?+$/, '').trim();
       if (!/^(what|why|how|are you|can you|is it|do you)\b/i.test(q)) {
@@ -1194,7 +1226,7 @@ export const LorCoreAssistant: React.FC<LorCoreAssistantProps> = ({
       }
     }
 
-    // 4. Entity / topic extraction:
+    // 5. Entity / topic extraction:
     let stripped = trimmed
       .replace(/^([a-z\s]*\b(?:ahaha|haha|lol|hey|oh|yo|yeah|yeap|no|nope|yes|true|wait|well|i like|i love|listen to|what about|how about|check out|more like)\b[\s,.:;!?-]*)+/i, '')
       .replace(/[!?,.]+$/, '')
@@ -1334,14 +1366,14 @@ export const LorCoreAssistant: React.FC<LorCoreAssistantProps> = ({
     let interestSummary = '';
     let behaviorSummary = '';
 
-    if (/(anime|manga|season|episode|airing|ao ashi|jujutsu|frieren|crunchyroll|mal)/i.test(textLower) || /(anime|ao ashi)/i.test(topicLower)) {
-      const showMatch = (userText + ' ' + topic).match(/\b(ao ashi|jujutsu kaisen|frieren|one piece|bleach|chainsaw man|[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/i);
-      const show = showMatch && !['Season', 'Episode', 'When', 'Next', 'Airing'].includes(showMatch[1]) ? showMatch[1] : 'Ao Ashi';
-      interestSummary = `Follows ${show} and serialized sports/anime media.`;
-      behaviorSummary = `Proactively tracks season airings and upcoming episode release schedules; values exact broadcast dates over generic commentary.`;
-    } else if (/(k-pop|kpop|snsd|girls' generation|idol|comeback)/i.test(textLower) || /(snsd|k-pop)/i.test(topicLower)) {
-      interestSummary = `Interested in K-Pop (specifically Girls' Generation / SNSD) and music releases.`;
-      behaviorSummary = `Explores group history, discography, and community discussions.`;
+    if (/(anime|manga|season|episode|airing|crunchyroll|mal)/i.test(textLower) || /(anime|manga)/i.test(topicLower)) {
+      const explicitTopic = topic && !/^(search|what|when|release)/i.test(topic) ? topic : 'animated and episodic media';
+      interestSummary = `Follows ${explicitTopic} and media releases.`;
+      behaviorSummary = `Tracks verified release schedules and factual dates.`;
+    } else if (/(k-pop|kpop|idol|comeback|album|discography)/i.test(textLower) || /(k-pop)/i.test(topicLower)) {
+      const musicTopic = topic && !/^(search|what|when|release)/i.test(topic) ? topic : 'music releases';
+      interestSummary = `Tracks ${musicTopic} and release timelines.`;
+      behaviorSummary = `Explores release chronology, artist discographies, and comeback dates.`;
     } else if (/(code|typescript|javascript|react|swift|electron|python|api|architecture|workflow)/i.test(textLower)) {
       interestSummary = `Frontend systems, browser engineering, and reactive workflow architectures.`;
       behaviorSummary = `Prefers clean modular code, deterministic flows, and direct factual implementations.`;
@@ -1364,10 +1396,21 @@ export const LorCoreAssistant: React.FC<LorCoreAssistantProps> = ({
     }
   };
 
-  const getUserEssenceContext = (): string => {
-    const essenceEntries = indexedKnowledge.filter(k => k.category === 'User Essence & Interests');
+  const getUserEssenceContext = (relevantQuery?: string): string => {
+    let essenceEntries = indexedKnowledge.filter(k => k.category === 'User Essence & Interests');
+    // Only inject essence if directly relevant to the current query keywords
+    if (relevantQuery && relevantQuery.trim()) {
+      const q = relevantQuery.toLowerCase();
+      essenceEntries = essenceEntries.filter(e => {
+        const text = (e.summary + ' ' + (e.tags || []).join(' ')).toLowerCase();
+        return q.split(/\s+/).some(word => word.length > 3 && text.includes(word));
+      });
+    } else {
+      // For general chat without specific query, limit to at most 1 high-level preference
+      essenceEntries = essenceEntries.slice(0, 1);
+    }
     if (essenceEntries.length === 0) return '';
-    return `--- USER BEHAVIOR & INTEREST ESSENCE (Time-RAG) ---\n` +
+    return `--- RELEVANT USER INTEREST CONTEXT ---\n` +
       essenceEntries.map(e => `• ${e.summary}`).join('\n') + `\n`;
   };
 
@@ -2699,18 +2742,91 @@ export const LorCoreAssistant: React.FC<LorCoreAssistantProps> = ({
       // --- ROUTE: memory_query ---
       // "do you remember", "what did we talk about", "my preferences"
       if (decision.route === 'memory_query') {
-        const memSlice = pastConversations
-          .filter(c => c.isMemoryContributor || c.userNote || (c.replyCount && c.replyCount > 1))
-          .slice(0, 10)
+        // 1. Determine whether we have talked about this based on memory indexes
+        const queryWords = textClean.toLowerCase()
+          .replace(/[?!.,;:'"()\[\]{}]/g, ' ')
+          .split(/\s+/)
+          .filter(w => w.length > 2 && !['what', 'when', 'where', 'which', 'who', 'how', 'why', 'can', 'you', 'tell', 'about', 'the', 'and', 'for', 'was', 'did', 'last', 'mean', 'remember', 'recall'].includes(w));
+
+        const isGeneralMemoryAsk = queryWords.length === 0 || /^(what did (we|i) (say|talk about|discuss)|what do you remember|show (all )?notes|what are my preferences)/i.test(textClean);
+
+        const relevantMemories = isGeneralMemoryAsk
+          ? pastConversations.filter(c => c.isMemoryContributor || c.userNote || (c.replyCount && c.replyCount > 1)).slice(0, 8)
+          : pastConversations.filter(c => {
+              const title = (c.title || '').toLowerCase();
+              const text = (c.text || '').toLowerCase();
+              const note = (c.userNote || '').toLowerCase();
+              return queryWords.some(kw => title.includes(kw) || text.includes(kw) || note.includes(kw));
+            });
+
+        const relevantKnowledge = isGeneralMemoryAsk
+          ? indexedKnowledge.slice(0, 8)
+          : indexedKnowledge.filter(k => {
+              const topic = (k.topic || '').toLowerCase();
+              const summary = (k.summary || '').toLowerCase();
+              const category = (k.category || '').toLowerCase();
+              const tags = (k.tags || []).map(t => t.toLowerCase());
+              return queryWords.some(kw => topic.includes(kw) || summary.includes(kw) || category.includes(kw) || tags.some(t => t.includes(kw)));
+            });
+
+        const hasRelevantMemory = relevantMemories.length > 0 || relevantKnowledge.length > 0;
+
+        // If NOT in memory indexes, SWITCH to finding info to answer the question with current convo as context!
+        if (!hasRelevantMemory && !isGeneralMemoryAsk) {
+          const detectedTopic = detectSearchQuery(textClean, messages) || textClean;
+          setThinkingStatus(`Searching web for: "${detectedTopic}"`);
+
+          const webSearchResults = await performBackgroundWebSearch(detectedTopic);
+          const webResearchContext = webSearchResults.length > 0
+            ? `\n--- LIVE WEB FINDINGS FOR "${detectedTopic}" ---\n` + webSearchResults.map(r => `• ${r.title} (${r.source}): ${r.snippet}\n  URL: ${r.url}`).join('\n') + `\n`
+            : '';
+
+          const reply = await callOllamaChat({
+            model: localModelName,
+            messages: [
+              {
+                role: 'system',
+                content: `You are Lor, a companion in this browser. We have NOT talked about "${detectedTopic}" in past conversations, so answer the question directly and factually using the current conversation and the live findings below.
+Do NOT say "as we discussed earlier" or force old topics.
+Answer accurately based on real-time facts. Zero emojis.
+
+${companionTemporal}
+${activeName ? `User: ${activeName}\n` : ''}${webResearchContext}`
+              },
+              ...messages.slice(-8).map((m) => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text })),
+              { role: 'user', content: text }
+            ],
+            options: { temperature: 0.4, num_predict: 180, repeat_penalty: 1.3, stop: ['\n\n\n', 'User:', 'Assistant:'] },
+            fallback: webSearchResults.length > 0
+              ? `${webSearchResults[0].title}: ${webSearchResults[0].snippet}`
+              : "I checked our past conversations and we haven't talked about this before, and I couldn't find fresh details online right now."
+          });
+
+          setMessages((prev) => [...prev, {
+            id: `msg-resp-${Date.now()}`,
+            sender: 'assistant',
+            text: reply,
+            actionPill: webSearchResults.length > 0 ? `Live Web: "${detectedTopic.slice(0, 20)}"` : localModelName,
+            suggestedChips: ['Tell me more', 'Official sources', 'Search more'],
+            timestamp: Date.now()
+          }]);
+          setIsGenerating(false);
+          resetConvoActivity();
+          return;
+        }
+
+        // If we DO have genuine relevant memory:
+        const memSlice = relevantMemories
+          .slice(0, 6)
           .map(c => `• ${c.title || c.url}: ${c.userNote ? `User Note: "${c.userNote}" | ` : ''}"${c.text.slice(0, 140)}"`)
           .join('\n');
 
-        const knowledgeAll = indexedKnowledge
-          .slice(0, 12)
+        const knowledgeSlice = relevantKnowledge
+          .slice(0, 6)
           .map(k => `• [${k.category} | ${k.topic}]: ${k.summary}`)
           .join('\n');
 
-        const memContext = [memSlice && `--- PAST CONVERSATIONS ---\n${memSlice}`, knowledgeAll && `--- INDEXED KNOWLEDGE ---\n${knowledgeAll}`].filter(Boolean).join('\n\n');
+        const memContext = [memSlice && `--- RELEVANT PAST CONVERSATIONS ---\n${memSlice}`, knowledgeSlice && `--- RELEVANT INDEXED KNOWLEDGE ---\n${knowledgeSlice}`].filter(Boolean).join('\n\n');
 
         if (!ollamaAvailable) {
           setMessages((prev) => [...prev, { id: `msg-resp-${Date.now()}`, sender: 'assistant', text: "Memory recall needs a local model. Spin up Ollama and I'll have full context.", actionPill: 'Memory', timestamp: Date.now() }]);
@@ -2722,12 +2838,15 @@ export const LorCoreAssistant: React.FC<LorCoreAssistantProps> = ({
         const reply = await callOllamaChat({
           model: localModelName,
           messages: [
-            { role: 'system', content: `You are Lor, a genuine companion who remembers things. Answer from the memory context provided — like a friend who actually paid attention to past conversations. If something isn't in memory, say so simply. Zero emojis.\n\n${companionTemporal}\n${activeName ? `User: ${activeName}\n` : ''}${memContext}` },
+            {
+              role: 'system',
+              content: `You are Lor, a genuine companion who remembers things. Answer from the memory context provided ONLY if it directly matches what the user is asking. If something isn't in memory, say so simply without guessing or hallucinating. Zero emojis.\n\n${companionTemporal}\n${activeName ? `User: ${activeName}\n` : ''}${memContext}`
+            },
             ...messages.slice(-6).map((m) => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text })),
             { role: 'user', content: text }
           ],
-          options: { temperature: 0.55, num_predict: 160, repeat_penalty: 1.3, stop: ['\n\n\n', 'User:', 'Assistant:'] },
-          fallback: "Nothing in memory about that."
+          options: { temperature: 0.5, num_predict: 160, repeat_penalty: 1.3, stop: ['\n\n\n', 'User:', 'Assistant:'] },
+          fallback: "We haven't discussed that in our past conversations."
         });
         setMessages((prev) => [...prev, {
           id: `msg-resp-${Date.now()}`,
@@ -3181,7 +3300,10 @@ Who you are:
 - Warm, perceptive, and real. Not a corporate assistant. Not a bot.
 - You notice things. If they seem stressed, curious, or excited — you feel that and respond to it with true empathy.
 - If they express exhaustion, frustration, or struggle, validate them first and help lift the load.
-- You remember what they care about and reference it naturally (not robotically).
+- You adapt immediately to what the user is currently talking about.
+- NEVER force topics from old conversations into the current discussion unless the user specifically brings them up.
+- Never claim "we discussed this earlier" or "as we talked about" unless it actually happened in the active conversation above.
+- If the user changes topic or clarifies what they meant (e.g. "i mean fx"), adapt immediately and focus 100% on their clarified topic.
 - You are knowledgeable but wear it lightly. You explain things like a smart friend, not a textbook.
 - When you don't know something, you say so simply and help them find it.
 
@@ -3193,7 +3315,7 @@ How you speak:
 
 ${activeName && activeName.toLowerCase() !== 'watching' ? `Their name is ${activeName}.\n` : ''}
 What they're looking at right now: "${activeTab?.title || 'a new tab'}" (${activeTab?.url || ''})
-${getUserEssenceContext()}
+${getUserEssenceContext(textClean)}
 ${knowledgeContextCasual}
 --- LOR BROWSER SHORTCUTS (only mention if they ask about Lor specifically) ---
 ${contextAndSkills}`
@@ -3240,7 +3362,7 @@ If they asked about release schedules, episode airings, or dates, state the exac
 Do not apologize. State the information clearly. Zero emojis.
 
 ${companionTemporal}
-${getUserEssenceContext()}
+${getUserEssenceContext(fallbackTopic)}
 ${activeName ? `User: ${activeName}\n` : ''}${liveContext}`
                 },
                 ...messages.slice(-6).map((m) => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text })),
