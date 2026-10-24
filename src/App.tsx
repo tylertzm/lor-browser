@@ -258,6 +258,17 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('mousemove', handleWindowMouseMove);
   }, [isHalfMoonCharging]);
 
+  useEffect(() => {
+    const handleOpenWorkflowEvent = () => setWorkflowCanvasOpen(true);
+    const handleCloseWorkflowEvent = () => setWorkflowCanvasOpen(false);
+    window.addEventListener('lor-open-workflow-canvas', handleOpenWorkflowEvent);
+    window.addEventListener('lor-close-workflow-canvas', handleCloseWorkflowEvent);
+    return () => {
+      window.removeEventListener('lor-open-workflow-canvas', handleOpenWorkflowEvent);
+      window.removeEventListener('lor-close-workflow-canvas', handleCloseWorkflowEvent);
+    };
+  }, []);
+
   const handleHalfMoonMouseEnter = () => {
     setIsHalfMoonCharging(true);
     if (chargeTimerRef.current) clearTimeout(chargeTimerRef.current);
